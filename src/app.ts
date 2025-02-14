@@ -36,7 +36,7 @@ server.decorate("authenticate", async function (request, reply) {
     }
 })
 
-server.listen({ host: '127.0.0.1', port: 8080 }, (err, address) => {
+server.listen({ host: '127.0.0.1', port: +(process.env.PORT || 8888) }, (err, address) => {
     if (err) {
         console.error(err);
         process.exit(1);
