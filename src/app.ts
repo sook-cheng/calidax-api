@@ -1,6 +1,6 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
-import { authRoute } from './routes';
+import { authRoute, mainRoute } from './routes';
 import dotenv from 'dotenv';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyJwt from '@fastify/jwt';
@@ -27,6 +27,7 @@ server.register(fastifyJwt, {
 
 // routes
 server.register(authRoute);
+server.register(mainRoute)
 
 server.decorate("authenticate", async function (request, reply) {
     try {
