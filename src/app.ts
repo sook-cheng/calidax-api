@@ -17,7 +17,13 @@ server.register(cors, {
     }
 });
 
-server.register(fastifyMultipart, { throwFileSizeLimit: false });
+server.register(fastifyMultipart, { 
+    throwFileSizeLimit: false, 
+    // File size limit 10Mb (in bytes)
+    limits: {
+        fileSize: 10000000
+    }
+});
 server.register(fastifyJwt, {
     secret: {
         private: fs.readFileSync(path.join(__dirname, '../keys/access_private.key'), 'utf8',),

@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import { getGoogleDriveService } from './google-auth.helper';
 
 export const createGoogleDriveFolder = async (folderName: string, folderId: string) => {
@@ -38,7 +37,7 @@ export const uploadToGoogleDrive = async (file: any, uploadFilename: string, mim
       fields: 'id',
     });
     
-    // console.log('File Id:', file.data.id);
+    console.log('File Id:', file.data.id);
     return file.data.id;
   } 
   catch (error: any) {
