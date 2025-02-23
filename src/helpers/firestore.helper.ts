@@ -6,6 +6,22 @@ const firestore = new Firestore({
     keyFilename: path.join(__dirname, '../../keys/google-service-account.json')
 });
 
+// Function to get user by email
+export const getUserByEmail = async (email: string) => {
+    const snapshot = await firestore.collection("users").where('email', '==', email).limit(1).get();
+    
+    if (snapshot.empty) return null; // No user found
+
+    const userDoc = snapshot.docs[0]; // Get first match
+    const userData = userDoc.data() as any;
+    return { id: userDoc.id, ...userData }; // Return user data with Firestore ID
+};
+
+// Function to update last login date
+export const updateUserLastLogin = async (userId: string) => {
+    await firestore.collection('users').doc(userId).update({ lastLoginDate: new Date().toISOString() });
+};
+
 export const getAllDocuments = async (collection: string) => {
     const snapshot = await firestore.collection(collection).get();
     const ret: any[] = [];
