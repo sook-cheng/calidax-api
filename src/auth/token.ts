@@ -1,22 +1,23 @@
 import { FastifyInstance } from 'fastify';
 
 export interface ITokenInfo {
-    id: number;
+    id: string;
     email: string;
-    lastLoginDate: string;
+    lastLoginDate?: string;
 }
 
-export const generateToken = (user: any, fastify: FastifyInstance) => {
+export const generateToken = (user: ITokenInfo, fastify: FastifyInstance): string => {
     const payload: ITokenInfo = {
-        lastLoginDate: user.lastLoginDate,
+        id: user.id.toString(),
         email: user.email,
-        id: user.id
+        lastLoginDate: user.lastLoginDate ?? '',
     };
-    const signOptions: any = {
+
+    const signOptions = {
         issuer: 'Calidax',
         subject: user.email,
         audience: 'calidaxtech.com',
-        algorithm: 'RS256',
+        algorithm: 'RS256' as const,
         expiresIn: '8h',
     };
 
