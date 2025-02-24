@@ -17,9 +17,13 @@ export const getUserByEmail = async (email: string) => {
     return { id: userDoc.id, ...userData }; // Return user data with Firestore ID
 };
 
-// Function to update last login date
+// Function to update last login date and login status
 export const updateUserLastLogin = async (userId: string) => {
-    await firestore.collection('users').doc(userId).update({ lastLoginDate: new Date().toISOString() });
+    await firestore.collection('users').doc(userId).update({ lastLoginDate: new Date().toISOString(), isLoggedIn: true });
+};
+
+export const updateUserLogout = async (userId: string) => {
+    await firestore.collection('users').doc(userId).update({ isLoggedIn: false });
 };
 
 export const getAllDocuments = async (collection: string) => {
