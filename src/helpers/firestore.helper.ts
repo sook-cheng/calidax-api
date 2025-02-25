@@ -62,3 +62,21 @@ export const deleteDocument = async (collection: string, document: string) => {
     const docRef = firestore.collection(collection).doc(document);
     await docRef.delete();
 }
+
+export const getUserById = async (userId: string) => {
+    try {
+      const userDoc = await firestore.collection("users").doc(userId).get();
+      
+      if (!userDoc.exists) return null;
+  
+      return { id: userDoc.id, ...userDoc.data() };
+    } catch (error) {
+      console.error("Error getting user by ID:", error);
+      throw new Error("Failed to fetch user");
+    }
+};
+
+export const updatePassword = async (collection: string, document: string, data: any) => {
+    const docRef = firestore.collection(collection).doc(document);
+    await docRef.update(data);
+};

@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { filterReports, getReports, uploadReport } from "../functions";
+import { getUserData, updateUserPassword } from "../functions/user.function";
 
 export async function mainRoute(fastify: FastifyInstance) {
     fastify.post("/upload-csv/:type", async (request, reply) => {
@@ -31,5 +32,13 @@ export async function mainRoute(fastify: FastifyInstance) {
 
     fastify.get("/all-reports", async (request, reply) => {
         return await getReports();
+    });
+
+    fastify.get('/user/:userId', async (request, reply) => {
+        return await getUserData(request, reply);
+    });
+
+    fastify.post("/user/:userId/update-password", async (request, reply) => {
+        return await updateUserPassword(request, reply);
     });
 }
