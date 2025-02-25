@@ -80,3 +80,22 @@ export const updatePassword = async (collection: string, document: string, data:
     const docRef = firestore.collection(collection).doc(document);
     await docRef.update(data);
 };
+
+export const saveCSVDataToFirestore = async (type: string, records: any[], googleDriveFileId: string) => {
+    try {
+      if (!records || records.length === 0) {
+        throw new Error("No records to save.");
+      }
+  
+      const collectionRef = firestore.collection("csv_reports");
+  
+      const reportRef = collectionRef.doc(type);
+      await reportRef.set({
+        uploadedAt: new Date(), 
+        googleDriveFileId,
+        records,
+      });
+    } catch (error) {
+      throw new Error("Failed to save CSV data to Firestore.");
+    }
+  };
