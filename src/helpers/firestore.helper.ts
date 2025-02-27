@@ -92,10 +92,51 @@ export const saveCSVDataToFirestore = async (type: string, records: any[], googl
       const reportRef = collectionRef.doc(type);
       await reportRef.set({
         uploadedAt: new Date(), 
+        campaignId: 488313, //temporary set the id first
         googleDriveFileId,
         records,
       });
     } catch (error) {
       throw new Error("Failed to save CSV data to Firestore.");
     }
-  };
+};
+
+export const getCSVDataFromFirestore = async () => {
+    try {
+        const collectionRef = firestore.collection("csv_reports");
+        const snapshot = await collectionRef.get();
+
+        if (snapshot.empty) {
+            return [];
+        }
+
+        const records: any[] = [];
+        snapshot.forEach(doc => {
+            records.push({ id: doc.id, ...doc.data() });
+        });
+
+        return records;
+    } catch (error) {
+        throw new Error("Failed to fetch CSV data.");
+    }
+};
+
+export const updateCampaignInFirestore = async (documentId: string, recordId: string, status: string) => {
+    const campaignRef = firestore.collection("csv_reports").doc(documentId);
+    const doc = await campaignRef.get();
+
+    if (!doc.exists) {
+        throw new Error("Document not found");
+    }
+
+    let records = doc.data()?.records || [];
+
+    records = records.map((record: any) => {
+        if (record.recordId === recordId) {
+            return { ...record, status };
+        }
+        return record;
+    });
+
+    await campaignRef.update({ records });
+};
