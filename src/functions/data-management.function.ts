@@ -26,6 +26,7 @@ export const uploadCSVAndSaveToFirestore = async (request: FastifyRequest, reply
             process.env.GOOGLE_DRIVE_CALIDAX_FOLDER_ID ?? ""
         );
 
+        let counter = 1
         const records: any[] = [];
         fs.createReadStream(tempFilePath)
             .pipe(parse({ headers: true }))
@@ -61,7 +62,11 @@ export const uploadCSVAndSaveToFirestore = async (request: FastifyRequest, reply
                         row.SubCampaignSubText = "Other";
                     }
                 }
-                records.push({...row, status: ""});
+                // Generate a unique ID
+                const uniqueID = `${file.filename}.${counter}`;
+                counter++;
+
+                records.push({...row, status: "", recordId: uniqueID});
             })
             .on("end", async () => {
                 await saveCSVDataToFirestore(type, records, googleDriveFileId || "");
