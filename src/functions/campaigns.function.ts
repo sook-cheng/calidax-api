@@ -3,7 +3,6 @@ import { getCSVDataFromFirestore, updateCampaignInFirestore } from "../helpers";
 
 export interface Campaigns {
     id: string;
-    campaignId: number;
     recordId: string;
     budget: number;
     endDate: string;
@@ -46,7 +45,6 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
         let groupedResults = records.map(recordSet => {
             let campaignList: Campaigns[] = recordSet.records.map((record: any) => ({
                 id: recordSet["id"],
-                campaignId: recordSet["campaignId"],
                 recordId: record["recordId"],
                 budget: Number(record["Budget segment budget"]),
                 endDate: record["Budget segment end date"],
@@ -69,7 +67,7 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
                 campaignList = campaignList.filter(campaign => campaign.status === status);
             }
             if (objective && objective !== "All") {
-                //campaignList = campaignList.filter(campaign => campaign.objective === objective); TODO:
+                campaignList = campaignList.filter(campaign => campaign.campaignSubText === objective);
             }
             if (searchText && searchText !== "") {
                 const lowerSearchText = searchText.toLowerCase();
@@ -109,7 +107,7 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
                     groupedMap.set(campaign.newField, {
                         subCampaign: [campaign], 
                         id: campaign.id,
-                        campaignId: campaign.campaignId,
+                        campaignId: 0,
                         client: campaign.client,
                         newField: campaign.newField,
                         campaignSubText: campaign.campaignSubText,
@@ -131,7 +129,6 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
                     group.subCampaign.push(campaign);
                     group.id = campaign.id;
                     group.client = campaign.client;
-                    group.campaignId = campaign.campaignId;
                     group.newField = campaign.newField;
                     group.campaignSubText = campaign.campaignSubText
                     group.totalViews += campaign.views || 0;
@@ -141,6 +138,19 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
                     group.totalReach += campaign.reach || 0;
                     group.totalClicks += campaign.clicks || 0;
                     group.progressValue = (group.totalSpent / group.totalBudget) * 100;
+
+                    if (campaign.newField.toLowerCase().includes("rantau"))
+                    {
+                        group.campaignId = 488313;
+                    }
+                    else if (campaign.newField.toLowerCase().includes("invesment thematic"))
+                    {
+                        group.campaignId = 240668;
+                    }
+                    else if (campaign.newField.toLowerCase() == "thematic")
+                    {
+                        group.campaignId = 482403;
+                    }
 
                     // Compare and update earliest & latest start date
                     if (new Date(group.earliestStartDate) > startDate) {
