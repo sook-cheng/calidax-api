@@ -6,26 +6,6 @@ const firestore = new Firestore({
     keyFilename: path.join(__dirname, '../../keys/google-service-account.json')
 });
 
-// Function to get user by email
-export const getUserByEmail = async (email: string) => {
-    const snapshot = await firestore.collection("users").where('email', '==', email).limit(1).get();
-    
-    if (snapshot.empty) return null; // No user found
-
-    const userDoc = snapshot.docs[0]; // Get first match
-    const userData = userDoc.data() as any;
-    return { id: userDoc.id, ...userData }; // Return user data with Firestore ID
-};
-
-// Function to update last login date and login status
-export const updateUserLastLogin = async (userId: string) => {
-    await firestore.collection('users').doc(userId).update({ lastLoginDate: new Date().toISOString(), isLoggedIn: true });
-};
-
-export const updateUserLogout = async (userId: string) => {
-    await firestore.collection('users').doc(userId).update({ isLoggedIn: false });
-};
-
 export const getAllDocuments = async (collection: string) => {
     const snapshot = await firestore.collection(collection).get();
     const ret: any[] = [];
@@ -63,6 +43,29 @@ export const deleteDocument = async (collection: string, document: string) => {
     await docRef.delete();
 }
 
+
+/** Users related functions - Firestore */
+
+// Function to get user by email
+export const getUserByEmail = async (email: string) => {
+    const snapshot = await firestore.collection("users").where('email', '==', email).limit(1).get();
+    
+    if (snapshot.empty) return null; // No user found
+
+    const userDoc = snapshot.docs[0]; // Get first match
+    const userData = userDoc.data() as any;
+    return { id: userDoc.id, ...userData }; // Return user data with Firestore ID
+};
+
+// Function to update last login date and login status
+export const updateUserLastLogin = async (userId: string) => {
+    await firestore.collection('users').doc(userId).update({ lastLoginDate: new Date().toISOString(), isLoggedIn: true });
+};
+
+export const updateUserLogout = async (userId: string) => {
+    await firestore.collection('users').doc(userId).update({ isLoggedIn: false });
+};
+
 export const getUserById = async (userId: string) => {
     try {
       const userDoc = await firestore.collection("users").doc(userId).get();
@@ -80,6 +83,9 @@ export const updatePassword = async (collection: string, document: string, data:
     const docRef = firestore.collection(collection).doc(document);
     await docRef.update(data);
 };
+
+
+/** CSV reports related functions - Firestore */
 
 export const saveCSVDataToFirestore = async (type: string, records: any[], googleDriveFileId: string) => {
     try {

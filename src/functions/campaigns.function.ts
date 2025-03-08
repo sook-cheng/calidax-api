@@ -1,5 +1,5 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import { getCSVDataFromFirestore, updateCampaignInFirestore } from "../helpers";
+import { FastifyRequest, FastifyReply, FastifyInstance } from "fastify";
+import { getCSVDataFromDB, updateCampaignInDB } from "../helpers";
 
 export interface Campaigns {
     id: string;
@@ -22,18 +22,18 @@ export interface Campaigns {
     status: string;
 }
 
-export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply) => {
+export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
         const { status, objective, searchText } = request.query as { status?: string; objective?: string; searchText?: string };
-        let records = await getCSVDataFromFirestore(); 
-        records = records.flat();
+        let records = await getCSVDataFromDB(fastify); 
+        // records = records.flat();
 
         const today = new Date(); 
 
         records.forEach(recordSet => {
             recordSet.records.forEach((record: any) => {
                 if (record.status !== "Paused") { // Only update if NOT "Paused"
-                    const endDate = new Date(record["Budget segment end date"]);
+                    const endDate = new Date(record.endDate);
                     if (endDate >= today) {
                         record.status = "Active";
                     } else {
@@ -45,24 +45,24 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
 
         let groupedResults = records.map(recordSet => {
             let campaignList: Campaigns[] = recordSet.records.map((record: any) => ({
-                id: recordSet["id"],
-                campaignId: recordSet["campaignId"],
-                recordId: record["recordId"],
-                budget: Number(record["Budget segment budget"]),
-                endDate: record["Budget segment end date"],
-                startDate: record["Budget segment start date"],
-                campaign: record["Campaign"],
-                campaignSubText: record["CampaignSubText"],
-                clicks: Number(record["Clicks"]),
-                client: record["Client"],
-                impressions: Number(record["Impressions"]),
-                newField: record["New Field"],
-                reach: Number(record["Reach"]),
-                spent: Number(record["Spent"]),
-                subCampaign: record["Sub Campaign"],
-                subCampaignSubText: record["SubCampaignSubText"],
-                views: Number(record["Views"]),
-                status: record["status"],
+                id: record.csvFileId,
+                campaignId: record.campaignId,
+                recordId: record.id,
+                budget: Number(record.budget),
+                endDate: record.endDate,
+                startDate: record.startDate,
+                campaign: record.campaign,
+                campaignSubText: record.campaignSubText,
+                clicks: Number(record.clicks),
+                client: record.client,
+                impressions: Number(record.impressions),
+                newField: record.newField,
+                reach: Number(record.reach),
+                spent: Number(record.spent),
+                subCampaign: record.subCampaign,
+                subCampaignSubText: record.subCampaignSubText,
+                views: Number(record.views),
+                status: record.status,
             }));
 
             if (status && status !== "All") {
@@ -196,14 +196,15 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
     }
 };
 
-export const updateCampaign = async (request, reply) => {
+export const updateCampaign = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
-        const { id, recordId, status } = request.body;
-        if (!id || !status) {
+        const body: any = request.body;
+        const { id, recordId, status } = body;
+        if (!recordId || !status) {
             return reply.code(400).send({ message: "Missing campaignId or status" });
         }
 
-        await updateCampaignInFirestore(id, recordId, status);
+        await updateCampaignInDB(fastify, recordId, status);
         reply.code(200).send({ message: "Campaign updated successfully" });
     } catch (error) {
         reply.code(500).send({ message: "Failed to update campaign" });

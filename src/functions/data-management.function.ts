@@ -1,6 +1,7 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import { uploadToGoogleDrive, saveCSVDataToFirestore } from "../helpers";
+import { FastifyRequest, FastifyReply, FastifyInstance } from "fastify";
+import { saveCSVDataToDB } from "../helpers";
 import { parse } from "fast-csv";
+import { pipeline } from "node:stream/promises";
 import fs from "fs";
 import path from "path";
 
@@ -8,25 +9,22 @@ const convertChineseDateToEnglish = (dateString: string): string => {
     return dateString.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/, "$1-$2-$3");
 };
 
-export const uploadCSVAndSaveToFirestore = async (request: FastifyRequest, reply: FastifyReply) => {
+const serverFolder = './home/dashboardcalidax/public_html/csv';
+
+export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
         const file = await request.file();
         if (!file) {
             return reply.status(400).send({ message: "No file uploaded" });
         }
-        const { type } = request.params as { type: string };
+        const { type, userId } = request.params as { type: string, userId: number };
         const tempFilePath = path.join(__dirname, `../../uploads/${file.filename}`);
         const fileBuffer = await file.toBuffer();
         await fs.promises.writeFile(tempFilePath, fileBuffer);
 
-        const googleDriveFileId = await uploadToGoogleDrive(
-            fs.createReadStream(tempFilePath),
-            file.filename,
-            file.mimetype,
-            process.env.GOOGLE_DRIVE_CALIDAX_FOLDER_ID ?? ""
-        );
-
-        let counter = 1
+        //  Upload file to storage
+        pipeline(file.file, fs.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }))
+                
         const records: any[] = [];
         fs.createReadStream(tempFilePath)
             .pipe(parse({ headers: true }))
@@ -62,16 +60,18 @@ export const uploadCSVAndSaveToFirestore = async (request: FastifyRequest, reply
                         row.SubCampaignSubText = "Other";
                     }
                 }
-                // Generate a unique ID
-                const uniqueID = `${file.filename}.${counter}`;
-                counter++;
 
-                records.push({...row, status: "", recordId: uniqueID});
+                // Hardcode campaign ID
+                const campaignId = row["New Field"].includes('RANTAU') 
+                    ? 488313 
+                    : row["New Field"].includes('INVESMENT') ? 240668 : 482403;
+
+                records.push({...row, status: "", campaignId});
             })
             .on("end", async () => {
-                await saveCSVDataToFirestore(type, records, googleDriveFileId || "");
+                const result = await saveCSVDataToDB(fastify, records, type, file.filename, userId);
                 fs.unlinkSync(tempFilePath); //Delete the temporary file
-                reply.code(200).send({ message: "CSV uploaded and stored successfully", googleDriveFileId, records });
+                reply.code(result?.code!).send({ message: "CSV uploaded and stored successfully", id: result?.id });
             })
             .on("error", (err) => {
                 reply.code(500).send({ message: err.message });
