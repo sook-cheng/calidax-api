@@ -1,0 +1,63 @@
+name: Deploy Node.js API to cPanel
+on:
+  push:
+    branches:
+      - main # Deploy on push to the 'main' branch
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: |
+          npm install --legacy-peer-deps
+          npm install --save-dev @types/node --legacy-peer-deps
+      - name: Build Project
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PORT_NUMBER: ${{ secrets.PORT_NUMBER }}
+          ORIGIN: ${{ secrets.ORIGIN }}
+          MAX_REQUEST: ${{ secrets.MAX_REQUEST }}
+          MAX_REQUEST_TIME: ${{ secrets.MAX_REQUEST_TIME }}
+          USER_EMAIL: ${{ secrets.USER_EMAIL }}
+          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_SERVICE: ${{ secrets.SMTP_SERVICE }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          NODE_ENV: ${{ secrets.NODE_ENV }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          APP_URL: ${{ secrets.APP_URL }}
+      - name: Archive Build Folder
+        run: tar -czf build.tar.gz dist package.json package-lock.json
+      - name: Install lftp
+        run: sudo apt-get install -y lftp
+      - name: Deploy to FTP Server
+        env:
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+        run: |
+          lftp -e "
+            set ftp:ssl-allow no;
+            open -u $FTP_USERNAME,$FTP_PASSWORD -p $FTP_PORT $FTP_HOST;
+            mirror -R --exclude node_modules
+            bye"
+      - name: Install Dependencies and Start Application
+        env:
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: 19199
+        run: |
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" $SSH_USERNAME@$SSH_HOST "
+          cd ~/your_project_directory && \
+          npm install --legacy-peer-deps && \
+          npm run start:dev"
