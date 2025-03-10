@@ -24,10 +24,10 @@ async function login(fastify, request, reply) {
         const userPassword = (0, base_64_1.decode)(password);
         const user = await (0, helpers_1.getUserByEmailDB)(fastify, email);
         if (!user || user.length === 0) {
-            // return reply.code(401).send({ message: "Invalid email" });
+            return reply.code(401).send({ message: "Invalid email" });
         }
         if (userPassword != user.password) {
-            // return reply.code(401).send({ message: "Invalid password" });
+            return reply.code(401).send({ message: "Invalid password" });
         }
         // Update last login
         await (0, helpers_1.updateUserLastLoginDB)(fastify, user.id);

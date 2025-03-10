@@ -221,17 +221,17 @@ exports.filterReports = filterReports;
  *
  * @returns {
  *  url: string
- *  driveId: string
  *  createdAt: date
  *  client: string
  *  startDate: date
  *  endDate: date
  * }
  */
-const getReports = async () => {
+const getReports = async (fastify) => {
+    const connection = await fastify['mysql'].getConnection();
     let value;
     try {
-        const docs = await (0, helpers_1.getAllDocuments)("reports");
+        const [docs] = await connection.query('SELECT * FROM dashboard_reports');
         // Sort by createdAt DESC
         value = docs.length > 0
             ? docs.sort((a, b) => (0, dayjs_1.default)(a.createdAt).isBefore((0, dayjs_1.default)(b.createdAt)) ? 1 : -1).map((x, idx) => {
@@ -248,7 +248,6 @@ const getReports = async () => {
                 return {
                     id: idx,
                     url: x?.url ?? '-',
-                    driveId: x?.driveId ?? '-',
                     name: x?.client ?? '-',
                     startDate,
                     endDate,

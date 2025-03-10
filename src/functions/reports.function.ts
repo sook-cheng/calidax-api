@@ -255,18 +255,18 @@ export const filterReports = async (fastify: FastifyInstance, data: any) => {
  * 
  * @returns {
  *  url: string
- *  driveId: string
  *  createdAt: date
  *  client: string
  *  startDate: date
  *  endDate: date
  * }
  */
-export const getReports = async () => {
+export const getReports = async (fastify: FastifyInstance) => {
+    const connection = await fastify['mysql'].getConnection();
     let value: any;
 
     try {
-        const docs = await getAllDocuments("reports");
+        const [docs] = await connection.query('SELECT * FROM dashboard_reports');
 
         // Sort by createdAt DESC
         value = docs.length > 0
@@ -287,7 +287,6 @@ export const getReports = async () => {
                 return {
                     id: idx,
                     url: x?.url ?? '-',
-                    driveId: x?.driveId ?? '-',
                     name: x?.client ?? '-',
                     startDate,
                     endDate,
