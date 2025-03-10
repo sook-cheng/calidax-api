@@ -1,9 +1,8 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import { getCSVDataFromFirestore, updateCampaignInFirestore } from "../helpers";
+import { FastifyRequest, FastifyReply, FastifyInstance } from "fastify";
+import { getCSVDataFromDB, updateCampaignInDB } from "../helpers";
 
 export interface Campaigns {
     id: string;
-    recordId: string;
     budget: number;
     endDate: string;
     startDate: string;
@@ -21,18 +20,18 @@ export interface Campaigns {
     status: string;
 }
 
-export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply) => {
+export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
         const { status, objective, searchText } = request.query as { status?: string; objective?: string; searchText?: string };
-        let records = await getCSVDataFromFirestore(); 
-        records = records.flat();
+        let records = await getCSVDataFromDB(fastify); 
+        // records = records.flat();
 
         const today = new Date(); 
 
         records.forEach(recordSet => {
             recordSet.records.forEach((record: any) => {
                 if (record.status !== "Paused") { // Only update if NOT "Paused"
-                    const endDate = new Date(record["Budget segment end date"]);
+                    const endDate = new Date(record.endDate);
                     if (endDate >= today) {
                         record.status = "Active";
                     } else {
@@ -44,23 +43,23 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
 
         let groupedResults = records.map(recordSet => {
             let campaignList: Campaigns[] = recordSet.records.map((record: any) => ({
-                id: recordSet["id"],
-                recordId: record["recordId"],
-                budget: Number(record["Budget segment budget"]),
-                endDate: record["Budget segment end date"],
-                startDate: record["Budget segment start date"],
-                campaign: record["Campaign"],
-                campaignSubText: record["CampaignSubText"],
-                clicks: Number(record["Clicks"]),
-                client: record["Client"],
-                impressions: Number(record["Impressions"]),
-                newField: record["New Field"],
-                reach: Number(record["Reach"]),
-                spent: Number(record["Spent"]),
-                subCampaign: record["Sub Campaign"],
-                subCampaignSubText: record["SubCampaignSubText"],
-                views: Number(record["Views"]),
-                status: record["status"],
+                id: record.id,
+                campaignId: record.campaignId,
+                budget: Number(record.budget),
+                endDate: record.endDate,
+                startDate: record.startDate,
+                campaign: record.campaign,
+                campaignSubText: record.campaignSubText,
+                clicks: Number(record.clicks),
+                client: record.client,
+                impressions: Number(record.impressions),
+                newField: record.newField,
+                reach: Number(record.reach),
+                spent: Number(record.spent),
+                subCampaign: record.subCampaign,
+                subCampaignSubText: record.subCampaignSubText,
+                views: Number(record.views),
+                status: record.status,
             }));
 
             if (status && status !== "All") {
@@ -139,19 +138,6 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
                     group.totalClicks += campaign.clicks || 0;
                     group.progressValue = (group.totalSpent / group.totalBudget) * 100;
 
-                    if (campaign.newField.toLowerCase().includes("rantau"))
-                    {
-                        group.campaignId = 488313;
-                    }
-                    else if (campaign.newField.toLowerCase().includes("invesment thematic"))
-                    {
-                        group.campaignId = 240668;
-                    }
-                    else if (campaign.newField.toLowerCase() == "thematic")
-                    {
-                        group.campaignId = 482403;
-                    }
-
                     // Compare and update earliest & latest start date
                     if (new Date(group.earliestStartDate) > startDate) {
                         group.earliestStartDate = campaign.startDate;
@@ -206,15 +192,16 @@ export const fetchCSVData = async (request: FastifyRequest, reply: FastifyReply)
     }
 };
 
-export const updateCampaign = async (request, reply) => {
+export const updateCampaign = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
-        const { id, recordId, status } = request.body;
+        const body: any = request.body;
+        const { id, status, userId } = body;
         if (!id || !status) {
             return reply.code(400).send({ message: "Missing campaignId or status" });
         }
 
-        await updateCampaignInFirestore(id, recordId, status);
-        reply.code(200).send({ message: "Campaign updated successfully" });
+        const result = await updateCampaignInDB(fastify, id, status, userId);
+        reply.code(result?.code).send({ message: result?.message });
     } catch (error) {
         reply.code(500).send({ message: "Failed to update campaign" });
     }

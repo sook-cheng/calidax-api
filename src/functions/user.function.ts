@@ -1,15 +1,15 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { getUserById, updatePassword } from '../helpers/firestore.helper';
+import { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
+import { getUserByIdDB, updatePasswordDB } from '../helpers';
 
-export const getUserData = async (request: FastifyRequest, reply: FastifyReply) => {
+export const getUserData = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { userId } = request.params as { userId: string };
+      const { userId } = request.params as { userId: number };
   
       if (!userId) {
         return reply.code(400).send({ error: "User ID is required" });
       }
   
-      const userData = await getUserById(userId);
+      const userData = await getUserByIdDB(fastify, userId);
   
       if (!userData) {
         return reply.status(404).send({ error: "User not found" });
@@ -23,9 +23,9 @@ export const getUserData = async (request: FastifyRequest, reply: FastifyReply) 
 };
 
 // Update user password
-export const updateUserPassword = async (request: FastifyRequest, reply: FastifyReply) => {
+export const updateUserPassword = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { userId } = request.params as { userId: string };
+      const { userId } = request.params as { userId: number };
       const { password } = request.body as { password: string };
   
       // Validate input
@@ -34,13 +34,13 @@ export const updateUserPassword = async (request: FastifyRequest, reply: Fastify
       }
   
       // Check if user exists
-      const user = await getUserById(userId);
+      const user = await getUserByIdDB(fastify, userId);
       if (!user) {
         return reply.code(401).send({ message: "User not found" });
       }
   
       // Update the password
-      await updatePassword("users", userId, { password });
+      await updatePasswordDB(fastify, userId, password);
   
       return reply.code(200).send({ message: "Password updated successfully" });
     } catch (error) {

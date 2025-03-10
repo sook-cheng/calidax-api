@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { decode } from 'base-64';
 import { generateToken } from "./token";
-import { getUserByEmail, updateUserLastLogin, updateUserLogout  } from "../helpers/firestore.helper";
+import { getUserByEmailDB, updateUserLastLoginDB, updateUserLogoutDB } from "../helpers";
 
 /**
  * 
@@ -22,7 +22,7 @@ export async function login(fastify: FastifyInstance, request: FastifyRequest, r
         const { email, password } = request.body as { email: string; password: string };
         const userPassword = decode(password);
     
-        const user = await getUserByEmail(email);
+        const user = await getUserByEmailDB(fastify, email);
         if (!user || user.length === 0) {
             return reply.code(401).send({ message: "Invalid email" });
         }
@@ -32,7 +32,7 @@ export async function login(fastify: FastifyInstance, request: FastifyRequest, r
         }
     
         // Update last login
-        await updateUserLastLogin(user.id);
+        await updateUserLastLoginDB(fastify, user.id);
     
         // Generate token
         const token = generateToken(user, fastify);
@@ -60,9 +60,9 @@ export async function login(fastify: FastifyInstance, request: FastifyRequest, r
  */
 export async function logout(fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
     try {
-        const { id } = request.params as { id: string };
+        const { id } = request.params as { id: number };
 
-        await updateUserLogout(id);
+        await updateUserLogoutDB(fastify, id);
 
         return reply.code(200).send({ message: "LOGOUT_SUCCESSFUL" });
     } catch (error: any) {
