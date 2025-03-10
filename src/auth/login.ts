@@ -2,7 +2,6 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { decode } from 'base-64';
 import { generateToken } from "./token";
 import { getUserByEmailDB, updateUserLastLoginDB, updateUserLogoutDB } from "../helpers";
-// import { getUserByEmail, updateUserLastLogin, updateUserLogout  } from "../helpers/firestore.helper";
 
 /**
  * 
