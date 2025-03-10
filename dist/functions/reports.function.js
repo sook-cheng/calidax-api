@@ -44,6 +44,7 @@ const uploadReport = async (fastify, file, reportId) => {
         throw new Error(`Failed to upload report: ${error?.message}`);
     }
     finally {
+        connection.release();
         return res;
     }
 };
@@ -79,6 +80,38 @@ const filterReports = async (fastify, data) => {
             endDate = dates[0];
         }
         let records = await (0, helpers_1.getCSVDataFromDB)(fastify);
+        const today = dayjs_1.default.utc().format();
+        records = records.map((record) => {
+            let status = record.status;
+            if (status !== "Paused") { // Only update if NOT "Paused"
+                const endDate = (0, dayjs_1.default)(record.endDate);
+                if (endDate.isSame(today) || endDate.isAfter(today)) {
+                    status = "Active";
+                }
+                else {
+                    status = "Ended";
+                }
+            }
+            return {
+                id: record.id,
+                campaignId: record.campaignId,
+                budget: Number(record.budget),
+                endDate: record.endDate,
+                startDate: record.startDate,
+                campaign: record.campaign,
+                campaignSubText: record.campaignSubText,
+                clicks: Number(record.clicks),
+                client: record.client,
+                impressions: Number(record.impressions),
+                newField: record.newField,
+                reach: Number(record.reach),
+                spent: Number(record.spent),
+                subCampaign: record.subCampaign,
+                subCampaignSubText: record.subCampaignSubText,
+                views: Number(record.views),
+                status,
+            };
+        });
         const filteredRecords = records.filter((x) => {
             return (data.client && x.client === data.client)
                 && (startDate && ((0, dayjs_1.default)(x.startDate).isSame((0, dayjs_1.default)(startDate)) || (0, dayjs_1.default)(x.startDate).isAfter((0, dayjs_1.default)(startDate))))
@@ -173,7 +206,7 @@ const filterReports = async (fastify, data) => {
         }));
         let reportId;
         if (ret.length > 0) {
-            const [result] = await connection.execute('INSERT INTO dashboard_reports (client,startDate,endDate,createdBy) VALUES (?,?,?,?)', [data?.client, data?.startDate, data?.endDate, data?.userId]);
+            const [result] = await connection.execute('INSERT INTO dashboard_reports (client,startDate,endDate,createdBy) VALUES (?,?,?,?)', [data?.client, startDate, endDate, data?.userId]);
             reportId = result?.insertId;
         }
         if (reportId)
@@ -185,10 +218,14 @@ const filterReports = async (fastify, data) => {
             };
     }
     catch (error) {
-        console.log(error);
+        res = {
+            code: 500,
+            message: error?.message
+        };
         throw new Error(`Failed to filter reports: ${error?.message}`);
     }
     finally {
+        connection.release();
         return res;
     }
 };
@@ -207,10 +244,10 @@ const getReports = async (fastify) => {
     const connection = await fastify['mysql'].getConnection();
     let value;
     try {
-        const [docs] = await connection.query('SELECT * FROM dashboard_reports');
+        const [docs] = await connection.query('SELECT * FROM dashboard_reports ORDER BY createdAt DESC');
         // Sort by createdAt DESC
         value = docs.length > 0
-            ? docs.sort((a, b) => (0, dayjs_1.default)(a.createdAt).isBefore((0, dayjs_1.default)(b.createdAt)) ? 1 : -1).map((x, idx) => {
+            ? docs.map((x) => {
                 let startDate = '-';
                 let endDate = '-';
                 if (x?.startDate) {
@@ -222,7 +259,7 @@ const getReports = async (fastify) => {
                     endDate = dates[0];
                 }
                 return {
-                    id: idx,
+                    id: x?.id ?? '-',
                     url: x?.url ?? '-',
                     name: x?.client ?? '-',
                     startDate,
@@ -232,6 +269,7 @@ const getReports = async (fastify) => {
             : [];
     }
     finally {
+        connection.release();
         return value;
     }
 };

@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { formatFileUrl, getAllDocuments, getCSVDataFromDB } from "../helpers";
+import { formatFileUrl, getCSVDataFromDB } from "../helpers";
 import { Campaigns } from "./campaigns.function";
 import { pipeline } from "node:stream/promises";
 import fs from "fs";
@@ -44,6 +44,7 @@ export const uploadReport = async (fastify: FastifyInstance, file: any, reportId
         throw new Error(`Failed to upload report: ${error?.message}`);
     }
     finally {
+        connection.release();
         return res;
     }
 }
@@ -83,6 +84,38 @@ export const filterReports = async (fastify: FastifyInstance, data: any) => {
         }
 
         let records = await getCSVDataFromDB(fastify);
+        
+        const today = dayjs.utc().format();
+        records = records.map((record: any) => {
+            let status = record.status;
+            if (status !== "Paused") { // Only update if NOT "Paused"
+                const endDate = dayjs(record.endDate);
+                if (endDate.isSame(today) || endDate.isAfter(today)) {
+                    status = "Active";
+                } else {
+                    status = "Ended";
+                }
+            }
+            return {
+                id: record.id,
+                campaignId: record.campaignId,
+                budget: Number(record.budget),
+                endDate: record.endDate,
+                startDate: record.startDate,
+                campaign: record.campaign,
+                campaignSubText: record.campaignSubText,
+                clicks: Number(record.clicks),
+                client: record.client,
+                impressions: Number(record.impressions),
+                newField: record.newField,
+                reach: Number(record.reach),
+                spent: Number(record.spent),
+                subCampaign: record.subCampaign,
+                subCampaignSubText: record.subCampaignSubText,
+                views: Number(record.views),
+                status,
+            }
+        });
 
         const filteredRecords = records.filter((x: any) => {
             return (data.client && x.client === data.client)
@@ -206,7 +239,7 @@ export const filterReports = async (fastify: FastifyInstance, data: any) => {
         let reportId;
         if (ret.length > 0) {
             const [result] = await connection.execute('INSERT INTO dashboard_reports (client,startDate,endDate,createdBy) VALUES (?,?,?,?)',
-                [data?.client, data?.startDate, data?.endDate, data?.userId]);
+                [data?.client, startDate, endDate, data?.userId]);
             reportId = result?.insertId;
         }
 
@@ -218,10 +251,14 @@ export const filterReports = async (fastify: FastifyInstance, data: any) => {
         };
     }
     catch (error: any) {
-        console.log(error)
+        res = {
+            code: 500,
+            message: error?.message
+        };
         throw new Error(`Failed to filter reports: ${error?.message}`);
     }
     finally {
+        connection.release();
         return res;
     }
 }
@@ -241,11 +278,11 @@ export const getReports = async (fastify: FastifyInstance) => {
     let value: any;
 
     try {
-        const [docs] = await connection.query('SELECT * FROM dashboard_reports');
+        const [docs] = await connection.query('SELECT * FROM dashboard_reports ORDER BY createdAt DESC');
 
         // Sort by createdAt DESC
         value = docs.length > 0
-            ? docs.sort((a, b) => dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1).map((x: any, idx: number) => {
+            ? docs.map((x: any) => {
                 let startDate = '-';
                 let endDate = '-';
 
@@ -260,7 +297,7 @@ export const getReports = async (fastify: FastifyInstance) => {
                 }
 
                 return {
-                    id: idx,
+                    id: x?.id ?? '-',
                     url: x?.url ?? '-',
                     name: x?.client ?? '-',
                     startDate,
@@ -270,6 +307,7 @@ export const getReports = async (fastify: FastifyInstance) => {
             : [];
     }
     finally {
+        connection.release();
         return value;
     }
 }

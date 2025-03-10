@@ -11,11 +11,17 @@ const convertChineseDateToEnglish = (dateString: string): string => {
 
 const serverFolder = '/home/dashboardcalidax/public_html/documents/csv';
 
-export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
+export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, request: FastifyRequest) => {
+    let res: { code: number, message: string, id?: number } | undefined = { code: 500, message: "INTERNAL_SERVER_EEROR" };
+    
     try {
         const file = await request.file();
         if (!file) {
-            return reply.status(400).send({ message: "No file uploaded" });
+            res = {
+                code: 400,
+                message: "No file uploaded"
+            }
+            return;
         }
         const { type, userId } = request.params as { type: string, userId: number };
         const fileBuffer = await file.toBuffer();
@@ -67,13 +73,21 @@ export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, requ
                 records.push({...row, status: "", campaignId});
             })
             .on("end", async () => {
-                const result = await saveCSVDataToDB(fastify, records, type, file.filename, userId);
-                reply.code(result?.code!).send({ message: "CSV uploaded and stored successfully", id: result?.id });
+                res = await saveCSVDataToDB(fastify, records, type, file.filename, userId);
             })
             .on("error", (err) => {
-                reply.code(500).send({ message: err.message });
+                res = {
+                    code: 500,
+                    message: err.message
+                };
             });
     } catch (error) {
-        return reply.code(500).send({ message: "Failed to process CSV file" });
+        res = {
+            code: 500,
+            message: "Failed to process CSV file"
+        };
+    }
+    finally {
+        return res;
     }
 };

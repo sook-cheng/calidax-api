@@ -21,26 +21,45 @@ const getUserData = async (fastify, request, reply) => {
 };
 exports.getUserData = getUserData;
 // Update user password
-const updateUserPassword = async (fastify, request, reply) => {
+const updateUserPassword = async (fastify, request) => {
+    let res = { code: 500, message: "INTERNAL_SERVER_ERROR" };
     try {
         const { userId } = request.params;
         const { password } = request.body;
         // Validate input
         if (!password || password.length < 6) {
-            return reply.code(401).send({ message: "Password must be at least 6 characters long" });
+            res = {
+                code: 401,
+                message: "Password must be at least 6 characters long"
+            };
+            return;
         }
         // Check if user exists
         const user = await (0, helpers_1.getUserByIdDB)(fastify, userId);
         if (!user) {
-            return reply.code(401).send({ message: "User not found" });
+            res = {
+                code: 401,
+                message: "User not found"
+            };
+            return;
         }
         // Update the password
         await (0, helpers_1.updatePasswordDB)(fastify, userId, password);
-        return reply.code(200).send({ message: "Password updated successfully" });
+        res = {
+            code: 200,
+            message: "Password updated successfully"
+        };
+        return;
     }
     catch (error) {
         console.error("Error updating password:", error);
-        return reply.code(500).send({ message: "Failed to update password" });
+        res = {
+            code: 500,
+            message: "Failed to update password"
+        };
+    }
+    finally {
+        return res;
     }
 };
 exports.updateUserPassword = updateUserPassword;
