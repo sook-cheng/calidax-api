@@ -19,7 +19,7 @@ export async function mainRoute(fastify: FastifyInstance) {
     });
 
     fastify.get("/all-reports", async (request, reply) => {
-        return await getReports();
+        return await getReports(fastify);
     });
 
     fastify.get('/user/:userId', async (request, reply) => {

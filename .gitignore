@@ -60,3 +60,4 @@ profile*
 /test
 # Comment out dist folder for deployment
 # /dist
+/keys

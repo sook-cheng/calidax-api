@@ -13,7 +13,7 @@ const getUserByEmailDB = async (fastify, email) => {
     let value;
     try {
         const [rows] = await connection.query('SELECT * FROM users WHERE email=?', [email]);
-        value = rows;
+        value = rows[0];
     }
     finally {
         connection.release();
@@ -72,7 +72,7 @@ const getUserByIdDB = async (fastify, userId) => {
     let value;
     try {
         const [rows] = await connection.query('SELECT * FROM users WHERE id=?', [userId]);
-        value = rows;
+        value = rows[0];
     }
     finally {
         connection.release();
