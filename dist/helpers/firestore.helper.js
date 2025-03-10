@@ -8,7 +8,7 @@ const firestore_1 = require("@google-cloud/firestore");
 const path_1 = __importDefault(require("path"));
 const firestore = new firestore_1.Firestore({
     projectId: process.env.GOOGLE_PROJECT_ID,
-    keyFilename: path_1.default.join(__dirname, '../../keys/google-service-account.json')
+    keyFilename: path_1.default.join(__dirname, '../keys/google-service-account.json')
 });
 const getAllDocuments = async (collection) => {
     const snapshot = await firestore.collection(collection).get();

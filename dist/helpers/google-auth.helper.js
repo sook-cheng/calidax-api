@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getGoogleDriveService = void 0;
 const googleapis_1 = require("googleapis");
-const google_service_account_json_1 = __importDefault(require("../../keys/google-service-account.json"));
+const google_service_account_json_1 = __importDefault(require("../keys/google-service-account.json"));
 const googleAuth = async () => {
     const scopes = [
         'https://www.googleapis.com/auth/drive'
