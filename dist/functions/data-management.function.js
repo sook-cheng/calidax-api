@@ -8,11 +8,11 @@ const helpers_1 = require("../helpers");
 const fast_csv_1 = require("fast-csv");
 const promises_1 = require("node:stream/promises");
 const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
+const node_stream_1 = require("node:stream");
 const convertChineseDateToEnglish = (dateString) => {
     return dateString.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/, "$1-$2-$3");
 };
-const serverFolder = './home/dashboardcalidax/public_html/documents/csv';
+const serverFolder = '/home/dashboardcalidax/public_html/documents/csv';
 const uploadCSVAndSaveToFirestore = async (fastify, request, reply) => {
     try {
         const file = await request.file();
@@ -20,13 +20,11 @@ const uploadCSVAndSaveToFirestore = async (fastify, request, reply) => {
             return reply.status(400).send({ message: "No file uploaded" });
         }
         const { type, userId } = request.params;
-        const tempFilePath = path_1.default.join(__dirname, `../../uploads/${file.filename}`);
         const fileBuffer = await file.toBuffer();
-        await fs_1.default.promises.writeFile(tempFilePath, fileBuffer);
         //  Upload file to storage
         (0, promises_1.pipeline)(file.file, fs_1.default.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }));
         const records = [];
-        fs_1.default.createReadStream(tempFilePath)
+        node_stream_1.Readable.from(fileBuffer)
             .pipe((0, fast_csv_1.parse)({ headers: true }))
             .on("data", (row) => {
             for (const key in row) {
@@ -62,7 +60,6 @@ const uploadCSVAndSaveToFirestore = async (fastify, request, reply) => {
         })
             .on("end", async () => {
             const result = await (0, helpers_1.saveCSVDataToDB)(fastify, records, type, file.filename, userId);
-            fs_1.default.unlinkSync(tempFilePath); //Delete the temporary file
             reply.code(result?.code).send({ message: "CSV uploaded and stored successfully", id: result?.id });
         })
             .on("error", (err) => {

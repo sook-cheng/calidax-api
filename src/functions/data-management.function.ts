@@ -3,13 +3,13 @@ import { saveCSVDataToDB } from "../helpers";
 import { parse } from "fast-csv";
 import { pipeline } from "node:stream/promises";
 import fs from "fs";
-import path from "path";
+import { Readable } from "node:stream";
 
 const convertChineseDateToEnglish = (dateString: string): string => {
     return dateString.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/, "$1-$2-$3");
 };
 
-const serverFolder = './home/dashboardcalidax/public_html/documents/csv';
+const serverFolder = '/home/dashboardcalidax/public_html/documents/csv';
 
 export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -18,15 +18,13 @@ export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, requ
             return reply.status(400).send({ message: "No file uploaded" });
         }
         const { type, userId } = request.params as { type: string, userId: number };
-        const tempFilePath = path.join(__dirname, `../../uploads/${file.filename}`);
         const fileBuffer = await file.toBuffer();
-        await fs.promises.writeFile(tempFilePath, fileBuffer);
 
         //  Upload file to storage
         pipeline(file.file, fs.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }));
                 
         const records: any[] = [];
-        fs.createReadStream(tempFilePath)
+        Readable.from(fileBuffer)
             .pipe(parse({ headers: true }))
             .on("data", (row) => {
                 for (const key in row) {
@@ -70,7 +68,6 @@ export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, requ
             })
             .on("end", async () => {
                 const result = await saveCSVDataToDB(fastify, records, type, file.filename, userId);
-                fs.unlinkSync(tempFilePath); //Delete the temporary file
                 reply.code(result?.code!).send({ message: "CSV uploaded and stored successfully", id: result?.id });
             })
             .on("error", (err) => {
