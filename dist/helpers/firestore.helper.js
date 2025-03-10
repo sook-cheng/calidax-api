@@ -6,9 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateCampaignInFirestore = exports.getCSVDataFromFirestore = exports.saveCSVDataToFirestore = exports.updatePassword = exports.getUserById = exports.updateUserLogout = exports.updateUserLastLogin = exports.getUserByEmail = exports.deleteDocument = exports.updateDocument = exports.createNewDocument = exports.getDocument = exports.getAllDocuments = void 0;
 const firestore_1 = require("@google-cloud/firestore");
 const path_1 = __importDefault(require("path"));
+const dayjs_1 = __importDefault(require("dayjs"));
+const utc_1 = __importDefault(require("dayjs/plugin/utc"));
+dayjs_1.default.extend(utc_1.default);
 const firestore = new firestore_1.Firestore({
     projectId: process.env.GOOGLE_PROJECT_ID,
-    keyFilename: path_1.default.join(__dirname, '../keys/google-service-account.json')
+    keyFilename: path_1.default.join(__dirname, '../../keys/google-service-account.json')
 });
 const getAllDocuments = async (collection) => {
     const snapshot = await firestore.collection(collection).get();
@@ -60,7 +63,7 @@ const getUserByEmail = async (email) => {
 exports.getUserByEmail = getUserByEmail;
 // Function to update last login date and login status
 const updateUserLastLogin = async (userId) => {
-    await firestore.collection('users').doc(userId).update({ lastLoginDate: new Date().toISOString(), isLoggedIn: true });
+    await firestore.collection('users').doc(userId).update({ lastLoginDate: dayjs_1.default.utc().format(), isLoggedIn: true });
 };
 exports.updateUserLastLogin = updateUserLastLogin;
 const updateUserLogout = async (userId) => {
@@ -94,7 +97,7 @@ const saveCSVDataToFirestore = async (type, records, googleDriveFileId) => {
         const collectionRef = firestore.collection("csv_reports");
         const reportRef = collectionRef.doc(type);
         await reportRef.set({
-            uploadedAt: new Date(),
+            uploadedAt: dayjs_1.default.utc().format(),
             campaignId: 488313, //temporary set the id first
             googleDriveFileId,
             records,

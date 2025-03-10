@@ -1,5 +1,8 @@
 import { Firestore } from "@google-cloud/firestore";
 import path from 'path';
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 
 const firestore = new Firestore({
     projectId: process.env.GOOGLE_PROJECT_ID,
@@ -59,7 +62,7 @@ export const getUserByEmail = async (email: string) => {
 
 // Function to update last login date and login status
 export const updateUserLastLogin = async (userId: string) => {
-    await firestore.collection('users').doc(userId).update({ lastLoginDate: new Date().toISOString(), isLoggedIn: true });
+    await firestore.collection('users').doc(userId).update({ lastLoginDate: dayjs.utc().format(), isLoggedIn: true });
 };
 
 export const updateUserLogout = async (userId: string) => {
@@ -97,7 +100,7 @@ export const saveCSVDataToFirestore = async (type: string, records: any[], googl
   
       const reportRef = collectionRef.doc(type);
       await reportRef.set({
-        uploadedAt: new Date(), 
+        uploadedAt: dayjs.utc().format(), 
         campaignId: 488313, //temporary set the id first
         googleDriveFileId,
         records,

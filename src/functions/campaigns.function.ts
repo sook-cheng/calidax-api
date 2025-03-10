@@ -1,5 +1,8 @@
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { FastifyRequest, FastifyReply, FastifyInstance } from "fastify";
 import { getCSVDataFromDB, updateCampaignInDB } from "../helpers";
+dayjs.extend(utc);
 
 export interface Campaigns {
     id: string;
@@ -26,13 +29,13 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
         let records = await getCSVDataFromDB(fastify); 
         // records = records.flat();
 
-        const today = new Date(); 
+        const today = dayjs.utc().format(); 
 
         records.forEach(recordSet => {
             recordSet.records.forEach((record: any) => {
                 if (record.status !== "Paused") { // Only update if NOT "Paused"
-                    const endDate = new Date(record.endDate);
-                    if (endDate >= today) {
+                    const endDate = dayjs(record.endDate);
+                    if (endDate.isSame(today) || endDate.isAfter(today)) {
                         record.status = "Active";
                     } else {
                         record.status = "Ended";
