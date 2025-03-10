@@ -1,18 +1,24 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateCampaign = exports.fetchCSVData = void 0;
+const dayjs_1 = __importDefault(require("dayjs"));
+const utc_1 = __importDefault(require("dayjs/plugin/utc"));
 const helpers_1 = require("../helpers");
+dayjs_1.default.extend(utc_1.default);
 const fetchCSVData = async (fastify, request, reply) => {
     try {
         const { status, objective, searchText } = request.query;
         let records = await (0, helpers_1.getCSVDataFromDB)(fastify);
         // records = records.flat();
-        const today = new Date();
+        const today = dayjs_1.default.utc().format();
         records.forEach(recordSet => {
             recordSet.records.forEach((record) => {
                 if (record.status !== "Paused") { // Only update if NOT "Paused"
-                    const endDate = new Date(record.endDate);
-                    if (endDate >= today) {
+                    const endDate = (0, dayjs_1.default)(record.endDate);
+                    if (endDate.isSame(today) || endDate.isAfter(today)) {
                         record.status = "Active";
                     }
                     else {

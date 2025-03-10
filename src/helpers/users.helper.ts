@@ -1,5 +1,8 @@
 
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { FastifyInstance } from "fastify";
+dayjs.extend(utc);
 
 /** Users related functions - MySql DB */
 
@@ -24,7 +27,7 @@ export const updateUserLastLoginDB = async (fastify: FastifyInstance, userId: nu
     let res: { code: number, message: string } = { code: 200, message: "OK." };
 
     try {
-        await connection.execute('UPDATE users SET lastLoginDate=?, isLoggedIn=? WHERE id=?', [new Date().toISOString(), true, userId]);
+        await connection.execute('UPDATE users SET lastLoginDate=?, isLoggedIn=? WHERE id=?', [dayjs.utc().format(), true, userId]);
 
         res = {
             code: 204,
