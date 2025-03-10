@@ -19,7 +19,8 @@ export async function mainRoute(fastify: FastifyInstance) {
     });
 
     fastify.get("/all-reports", async (request, reply) => {
-        return await getReports(fastify);
+        const data = await getReports(fastify);
+        reply.send(data);
     });
 
     fastify.get('/user/:userId', async (request, reply) => {
