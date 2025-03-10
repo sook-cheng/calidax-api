@@ -3,7 +3,6 @@ import { getCSVDataFromDB, updateCampaignInDB } from "../helpers";
 
 export interface Campaigns {
     id: string;
-    recordId: string;
     budget: number;
     endDate: string;
     startDate: string;
@@ -44,9 +43,8 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
 
         let groupedResults = records.map(recordSet => {
             let campaignList: Campaigns[] = recordSet.records.map((record: any) => ({
-                id: record.csvFileId,
+                id: record.id,
                 campaignId: record.campaignId,
-                recordId: record.id,
                 budget: Number(record.budget),
                 endDate: record.endDate,
                 startDate: record.startDate,
@@ -140,19 +138,6 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
                     group.totalClicks += campaign.clicks || 0;
                     group.progressValue = (group.totalSpent / group.totalBudget) * 100;
 
-                    if (campaign.newField.toLowerCase().includes("rantau"))
-                    {
-                        group.campaignId = 488313;
-                    }
-                    else if (campaign.newField.toLowerCase().includes("invesment thematic"))
-                    {
-                        group.campaignId = 240668;
-                    }
-                    else if (campaign.newField.toLowerCase() == "thematic")
-                    {
-                        group.campaignId = 482403;
-                    }
-
                     // Compare and update earliest & latest start date
                     if (new Date(group.earliestStartDate) > startDate) {
                         group.earliestStartDate = campaign.startDate;
@@ -210,13 +195,13 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
 export const updateCampaign = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
         const body: any = request.body;
-        const { id, recordId, status } = body;
-        if (!recordId || !status) {
+        const { id, status, userId } = body;
+        if (!id || !status) {
             return reply.code(400).send({ message: "Missing campaignId or status" });
         }
 
-        await updateCampaignInDB(fastify, recordId, status);
-        reply.code(200).send({ message: "Campaign updated successfully" });
+        const result = await updateCampaignInDB(fastify, id, status, userId);
+        reply.code(result?.code).send({ message: result?.message });
     } catch (error) {
         reply.code(500).send({ message: "Failed to update campaign" });
     }

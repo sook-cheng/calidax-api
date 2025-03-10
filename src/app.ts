@@ -6,9 +6,17 @@ import fastifyMultipart from '@fastify/multipart';
 import fastifyJwt from '@fastify/jwt';
 import path from 'path';
 import fs from 'fs';
+import fastifyMysql from '@fastify/mysql';
 
 dotenv.config();
 const server = fastify();
+
+server.register(fastifyMysql, {
+    promise: true,
+    connectionString: process.env.NODE_ENV === "development"
+        ? `mysql://${process.env.DATABASE_USER_NAME}@${process.env.DATABASE_HOST}:3306/${process.env.DATABASE_NAME}`
+        : `mysql://${process.env.DATABASE_USER_NAME}:${process.env.DATABASE_USER_PASSWORD}@${process.env.DATABASE_HOST}:3306/${process.env.DATABASE_NAME}`
+});
 
 server.register(cors, {
     origin: (request, callback) => {
@@ -21,7 +29,7 @@ server.register(fastifyMultipart, {
     throwFileSizeLimit: false, 
     // File size limit 10Mb (in bytes)
     limits: {
-        fileSize: 10000000
+        fileSize: 100000000
     }
 });
 server.register(fastifyJwt, {

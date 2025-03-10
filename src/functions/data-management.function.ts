@@ -9,7 +9,7 @@ const convertChineseDateToEnglish = (dateString: string): string => {
     return dateString.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/, "$1-$2-$3");
 };
 
-const serverFolder = './home/dashboardcalidax/public_html/csv';
+const serverFolder = './home/dashboardcalidax/public_html/documents/csv';
 
 export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -23,7 +23,7 @@ export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, requ
         await fs.promises.writeFile(tempFilePath, fileBuffer);
 
         //  Upload file to storage
-        pipeline(file.file, fs.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }))
+        pipeline(file.file, fs.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }));
                 
         const records: any[] = [];
         fs.createReadStream(tempFilePath)

@@ -15,8 +15,8 @@ export const saveCSVDataToDB = async (fastify: FastifyInstance, records: any[], 
             return;
         }
 
-        const path = formatFileUrl('csv', filename);
-        const [result] = await connection.execute('INSERT INTO csv_files (name,path,source,createdBy) VALUES (?,?,?,?)',
+        const path = formatFileUrl('documents/csv', filename);
+        const [result] = await connection.execute('INSERT INTO csv_files (name,url,source,createdBy) VALUES (?,?,?,?)',
             [filename, path, type, userId]);
 
         let sql = 'INSERT INTO csv_data (client,campaignId,campaign,campaignSubText,subCampaign,subCampaignSubText,newField,status,budget,spent,startDate,endDate,clicks,impressions,reach,views,csvFileId,createdBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
@@ -35,14 +35,14 @@ export const saveCSVDataToDB = async (fastify: FastifyInstance, records: any[], 
             id: result.insertId,
         } : {
             code: 500,
-            message: "Internal Server Error."
+            message: "INTERNAL_SERVER_ERROR"
         };
     }
     catch (err) {
         console.error(err);
         res = {
             code: 500,
-            message: "Internal Server Error."
+            message: "INTERNAL_SERVER_ERROR"
         };
     }
     finally {
@@ -66,25 +66,25 @@ export const getCSVDataFromDB = async (fastify: FastifyInstance) => {
     }
 };
 
-export const updateCampaignInDB = async (fastify: FastifyInstance, id: number, status: string) => {
+export const updateCampaignInDB = async (fastify: FastifyInstance, id: number, status: string, userId: number) => {
     const connection = await fastify['mysql'].getConnection();
     let res: { code: number, message: string } = { code: 200, message: "OK." };
 
     try {
-        const [result] = await connection.execute('UPDATE csv_data SET status=? WHERE id=?', [status, id]);
+        const [result] = await connection.execute('UPDATE csv_data SET status=?, updatedBy=? WHERE id=?', [status, userId, id]);
         res = result?.affectedRows > 0 ? {
             code: 204,
             message: `CSV data updated.`
         } : {
             code: 500,
-            message: "Internal Server Error."
+            message: "INTERNAL_SERVER_ERROR"
         };
     }
     catch (err) {
         console.error(err);
         res = {
             code: 500,
-            message: "Internal Server Error."
+            message: "INTERNAL_SERVER_ERROR"
         };
     }
     finally {
@@ -93,6 +93,6 @@ export const updateCampaignInDB = async (fastify: FastifyInstance, id: number, s
     }
 };
 
-const formatFileUrl = (folder: string, filename: string) => {
+export const formatFileUrl = (folder: string, filename: string) => {
     return encodeURI(`https://dashboard.calidaxtech.com/${folder}/${filename}`);
 }
