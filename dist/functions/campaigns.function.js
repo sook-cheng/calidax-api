@@ -63,7 +63,7 @@ const fetchCSVData = async (fastify, request, reply) => {
                 groupedMap.set(campaign.newField, {
                     subCampaign: [campaign],
                     id: campaign.id,
-                    campaignId: 0,
+                    campaignId: campaign.campaignId,
                     client: campaign.client,
                     newField: campaign.newField,
                     campaignSubText: campaign.campaignSubText,
