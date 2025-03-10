@@ -27,7 +27,6 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
     try {
         const { status, objective, searchText } = request.query as { status?: string; objective?: string; searchText?: string };
         let records = await getCSVDataFromDB(fastify);
-        // records = records.flat();
 
         const today = dayjs.utc().format();
 
@@ -42,7 +41,22 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
                 }
             }
             return {
-                ...record,
+                id: record.id,
+                campaignId: record.campaignId,
+                budget: Number(record.budget),
+                endDate: record.endDate,
+                startDate: record.startDate,
+                campaign: record.campaign,
+                campaignSubText: record.campaignSubText,
+                clicks: Number(record.clicks),
+                client: record.client,
+                impressions: Number(record.impressions),
+                newField: record.newField,
+                reach: Number(record.reach),
+                spent: Number(record.spent),
+                subCampaign: record.subCampaign,
+                subCampaignSubText: record.subCampaignSubText,
+                views: Number(record.views),
                 status,
             }
         });
@@ -177,17 +191,28 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
     }
 };
 
-export const updateCampaign = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
+export const updateCampaign = async (fastify: FastifyInstance, request: FastifyRequest) => {
+    let res: { code: number, message: string } = { code: 500, message: "INTERNAL_SERVER_ERROR" };
     try {
         const body: any = request.body;
         const { id, status, userId } = body;
         if (!id || !status) {
-            return reply.code(400).send({ message: "Missing campaignId or status" });
+            res = {
+                code: 400, 
+                message: "Missing campaignId or status"
+            }
+            return;
         }
 
-        const result = await updateCampaignInDB(fastify, id, status, userId);
-        reply.code(result?.code).send({ message: result?.message });
+        res = await updateCampaignInDB(fastify, id, status, userId);
+
     } catch (error) {
-        reply.code(500).send({ message: "Failed to update campaign" });
+        res = {
+            code: 500, 
+            message: "Failed to update campaign"
+        }
+    }
+    finally {
+        return res;
     }
 };

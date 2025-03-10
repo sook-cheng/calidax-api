@@ -27,11 +27,13 @@ export async function mainRoute(fastify: FastifyInstance) {
     });
 
     fastify.post("/user/:userId/update-password", async (request, reply) => {
-        return await updateUserPassword(fastify, request, reply);
+        const result = await updateUserPassword(fastify, request);
+        reply.code(result?.code!).send({ message: result?.message });
     });
 
     fastify.post("/upload-csv/:type/:userId", async (request, reply) => {
-        return await uploadCSVAndSaveToFirestore(fastify, request, reply);
+        const result = await uploadCSVAndSaveToFirestore(fastify, request);
+        reply.code(result?.code!).send({ message: result?.message, id: result?.id });
     });
 
     fastify.get("/fetch-csv-record", async (request, reply) => {
@@ -39,6 +41,7 @@ export async function mainRoute(fastify: FastifyInstance) {
     });
 
     fastify.post("/update-campaign", async (request, reply) => {
-        return await updateCampaign(fastify, request, reply);
+        const result = await updateCampaign(fastify, request);
+        reply.code(result?.code!).send({ message: result?.message });
     });
 }
