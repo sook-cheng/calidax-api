@@ -7,7 +7,7 @@ import fs from "fs";
 import { FastifyInstance } from "fastify";
 dayjs.extend(utc);
 
-const serverFolder = './home/dashboardcalidax/public_html/documents/reports';
+const serverFolder = '/home/dashboardcalidax/public_html/documents/reports';
 
 /**
  * 
