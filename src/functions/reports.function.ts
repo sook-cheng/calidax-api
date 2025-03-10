@@ -84,32 +84,7 @@ export const filterReports = async (fastify: FastifyInstance, data: any) => {
 
         let records = await getCSVDataFromDB(fastify);
 
-        let allRecords: any = [];
-        for (const r of records) {
-            allRecords = [...allRecords, ...r.records.map((record: any) => {
-                return {
-                    id: record.id,
-                    campaignId: record.campaignId,
-                    budget: Number(record.budget),
-                    endDate: record.endDate,
-                    startDate: record.startDate,
-                    campaign: record.campaign,
-                    campaignSubText: record.campaignSubText,
-                    clicks: Number(record.clicks),
-                    client: record.client,
-                    impressions: Number(record.impressions),
-                    newField: record.newField,
-                    reach: Number(record.reach),
-                    spent: Number(record.spent),
-                    subCampaign: record.subCampaign,
-                    subCampaignSubText: record.subCampaignSubText,
-                    views: Number(record.views),
-                    status: record.status,
-                }
-            })];
-        }
-
-        const filteredRecords = allRecords.filter((x: any) => {
+        const filteredRecords = records.filter((x: any) => {
             return (data.client && x.client === data.client)
                 && (startDate && (dayjs(x.startDate).isSame(dayjs(startDate)) || dayjs(x.startDate).isAfter(dayjs(startDate))))
                 && (endDate && (dayjs(x.endDate).isSame(dayjs(endDate)) || dayjs(x.endDate).isBefore(dayjs(endDate))))
