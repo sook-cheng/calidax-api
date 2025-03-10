@@ -58,4 +58,5 @@ profile*
 *flamegraph*
 
 /test
-/dist
+# Comment out dist folder for deployment
+# /dist
