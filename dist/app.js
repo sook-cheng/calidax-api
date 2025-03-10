@@ -35,8 +35,8 @@ server.register(multipart_1.default, {
 });
 server.register(jwt_1.default, {
     secret: {
-        private: fs_1.default.readFileSync(path_1.default.join(__dirname, '../keys/access_private.key'), 'utf8'),
-        public: fs_1.default.readFileSync(path_1.default.join(__dirname, '../keys/access_public.key'), 'utf8'),
+        private: fs_1.default.readFileSync(path_1.default.join(__dirname, './keys/access_private.key'), 'utf8'),
+        public: fs_1.default.readFileSync(path_1.default.join(__dirname, './keys/access_public.key'), 'utf8'),
     }
 });
 // routes

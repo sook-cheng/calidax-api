@@ -5,7 +5,6 @@ exports.logout = logout;
 const base_64_1 = require("base-64");
 const token_1 = require("./token");
 const helpers_1 = require("../helpers");
-// import { getUserByEmail, updateUserLastLogin, updateUserLogout  } from "../helpers/firestore.helper";
 /**
  *
  * @param fastify
