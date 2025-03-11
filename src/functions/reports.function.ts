@@ -278,33 +278,9 @@ export const getReports = async (fastify: FastifyInstance) => {
     let value: any;
 
     try {
-        const [docs] = await connection.query('SELECT * FROM dashboard_reports ORDER BY createdAt DESC');
+        const [rows] = await connection.query('SELECT * FROM dashboard_reports ORDER BY createdAt DESC');
 
-        // Sort by createdAt DESC
-        value = docs.length > 0
-            ? docs.map((x: any) => {
-                let startDate = '-';
-                let endDate = '-';
-
-                if (x?.startDate) {
-                    const dates = x.startDate.split('T');
-                    startDate = dates[0];
-                }
-
-                if (x?.endDate) {
-                    const dates = x.endDate.split('T');
-                    endDate = dates[0];
-                }
-
-                return {
-                    id: x?.id ?? '-',
-                    url: x?.url ?? '-',
-                    name: x?.client ?? '-',
-                    startDate,
-                    endDate,
-                }
-            })
-            : [];
+        value = rows;
     }
     finally {
         connection.release();
