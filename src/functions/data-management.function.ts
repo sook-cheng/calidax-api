@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply, FastifyInstance } from "fastify";
-import { saveCSVDataToDB } from "../helpers";
+import { saveCSVDataToDB, truncateCsvTable } from "../helpers";
 import { parse } from "fast-csv";
 import { pipeline } from "node:stream/promises";
 import fs from "fs";
@@ -73,6 +73,7 @@ export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, requ
                 records.push({...row, status: "", campaignId});
             })
             .on("end", async () => {
+                await truncateCsvTable(fastify);
                 res = await saveCSVDataToDB(fastify, records, type, file.filename, userId);
             })
             .on("error", (err) => {

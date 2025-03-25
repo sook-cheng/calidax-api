@@ -64,6 +64,7 @@ const uploadCSVAndSaveToFirestore = async (fastify, request) => {
             records.push({ ...row, status: "", campaignId });
         })
             .on("end", async () => {
+            await (0, helpers_1.truncateCsvTable)(fastify);
             res = await (0, helpers_1.saveCSVDataToDB)(fastify, records, type, file.filename, userId);
         })
             .on("error", (err) => {
