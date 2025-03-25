@@ -93,6 +93,33 @@ export const updateCampaignInDB = async (fastify: FastifyInstance, id: number, s
     }
 };
 
+export const truncateCsvTable = async (fastify: FastifyInstance) => {
+    const connection = await fastify['mysql'].getConnection();
+    let res: { code: number, message: string } = { code: 200, message: "OK." };
+
+    try {
+        const [result] = await connection.execute('TRUNCATE TABLE csv_data');
+        res = result?.affectedRows > 0 ? {
+            code: 204,
+            message: `CSV data cleared.`
+        } : {
+            code: 500,
+            message: "INTERNAL_SERVER_ERROR"
+        };
+    }
+    catch (err) {
+        console.error(err);
+        res = {
+            code: 500,
+            message: "INTERNAL_SERVER_ERROR"
+        };
+    }
+    finally {
+        connection.release();
+        return res;
+    }
+}
+
 export const formatFileUrl = (folder: string, filename: string) => {
     return encodeURI(`https://dashboard.calidaxtech.com/${folder}/${filename}`);
 }

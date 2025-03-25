@@ -244,29 +244,8 @@ const getReports = async (fastify) => {
     const connection = await fastify['mysql'].getConnection();
     let value;
     try {
-        const [docs] = await connection.query('SELECT * FROM dashboard_reports ORDER BY createdAt DESC');
-        // Sort by createdAt DESC
-        value = docs.length > 0
-            ? docs.map((x) => {
-                let startDate = '-';
-                let endDate = '-';
-                if (x?.startDate) {
-                    const dates = x.startDate.split('T');
-                    startDate = dates[0];
-                }
-                if (x?.endDate) {
-                    const dates = x.endDate.split('T');
-                    endDate = dates[0];
-                }
-                return {
-                    id: x?.id ?? '-',
-                    url: x?.url ?? '-',
-                    name: x?.client ?? '-',
-                    startDate,
-                    endDate,
-                };
-            })
-            : [];
+        const [rows] = await connection.query('SELECT * FROM dashboard_reports ORDER BY createdAt DESC');
+        value = rows;
     }
     finally {
         connection.release();
