@@ -15,9 +15,9 @@ const saveCSVDataToDB = async (fastify, records, type, filename, userId) => {
         }
         const path = (0, exports.formatFileUrl)('documents/csv', filename);
         const [result] = await connection.execute('INSERT INTO csv_files (name,url,source,createdBy) VALUES (?,?,?,?)', [filename, path, type, userId]);
-        let sql = 'INSERT INTO csv_data (client,campaignId,campaign,campaignSubText,subCampaign,subCampaignSubText,newField,status,budget,spent,startDate,endDate,clicks,impressions,reach,views,csvFileId,createdBy) VALUES ';
+        let sql = 'INSERT INTO csv_data (client,campaignId,campaign,campaignSubText,subCampaign,subCampaignSubText,newField,status,budget,spent,startDate,endDate,clicks,impressions,reach,views,type,csvFileId,createdBy) VALUES ';
         for (const record of records) {
-            sql += `('${record.Client}',${record.campaignId},'${record.Campaign}','${record.CampaignSubText}','${record['Sub Campaign']}','${record.SubCampaignSubText}','${record['New Field']}','${record.status}',${record['Budget segment budget']},${record.Spent},'${record['Budget segment start date']}','${record['Budget segment end date']}',${record.Clicks},${record.Impressions},${record.Reach},${record.Views},${result?.insertId},${userId}),`;
+            sql += `('${record.Client}',${record.campaignId},'${record.Campaign}','${record.CampaignSubText}','${record['Sub Campaign']}','${record.SubCampaignSubText}','${record['New Field']}','${record.status}',${record['Budget segment budget']},${record.Spent},'${record['Budget segment start date']}','${record['Budget segment end date']}',${record.Clicks},${record.Impressions},${record.Reach},${record.Views},'${record.Type}',${result?.insertId},${userId}),`;
         }
         sql = sql.replaceAll("'null'", "null");
         sql = sql.replaceAll("'undefined'", "null");

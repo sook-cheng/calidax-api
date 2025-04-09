@@ -13,7 +13,8 @@ const fetchCSVData = async (fastify, request, reply) => {
         const { status, objective, searchText } = request.query;
         let records = await (0, helpers_1.getCSVDataFromDB)(fastify);
         const today = dayjs_1.default.utc().format();
-        let campaignList = records.map((record) => {
+        // Filter out sub-campaigns
+        let campaignList = records.filter((r) => r.type === "sub").map((record) => {
             let status = record.status;
             if (status !== "Paused") { // Only update if NOT "Paused"
                 const endDate = (0, dayjs_1.default)(record.endDate);
@@ -120,26 +121,30 @@ const fetchCSVData = async (fastify, request, reply) => {
                 }
             }
         });
-        const groupedResults = Array.from(groupedMap.values()).map(group => ({
-            id: group.id,
-            campaignId: group.campaignId,
-            client: group.client,
-            newField: group.newField,
-            campaignSubText: group.campaignSubText,
-            sumView: group.totalViews,
-            sumSpent: group.totalSpent,
-            sumBudget: group.totalBudget,
-            sumImpressions: group.totalImpressions,
-            sumReach: group.totalReach,
-            sumClicks: group.totalClicks,
-            earliestStartDate: group.earliestStartDate,
-            latestStartDate: group.latestStartDate,
-            earliestEndDate: group.earliestEndDate,
-            latestEndDate: group.latestEndDate,
-            status: group.status,
-            subCampaign: group.subCampaign,
-            progressValue: group.progressValue,
-        }));
+        const groupedResults = Array.from(groupedMap.values()).map((group) => {
+            const mainCampaign = records.find((r) => r.newField === group.newField && r.type === "main");
+            return {
+                id: group.id,
+                campaignId: group.campaignId,
+                client: group.client,
+                newField: group.newField,
+                campaignSubText: group.campaignSubText,
+                sumView: group.totalViews,
+                sumSpent: group.totalSpent,
+                sumBudget: group.totalBudget,
+                sumImpressions: group.totalImpressions,
+                // Only Reach is not calculated by sum of sub-campaigns
+                sumReach: mainCampaign ? mainCampaign.reach : group.totalReach,
+                sumClicks: group.totalClicks,
+                earliestStartDate: group.earliestStartDate,
+                latestStartDate: group.latestStartDate,
+                earliestEndDate: group.earliestEndDate,
+                latestEndDate: group.latestEndDate,
+                status: group.status,
+                subCampaign: group.subCampaign,
+                progressValue: group.progressValue,
+            };
+        });
         reply.code(200).send({ message: "CSV data retrieved successfully", records: groupedResults });
     }
     catch (error) {

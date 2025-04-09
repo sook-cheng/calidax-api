@@ -31,7 +31,8 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
 
         const today = dayjs.utc().format();
 
-        let campaignList: Campaigns[] = records.map((record: any) => {
+        // Filter out sub-campaigns
+        let campaignList: Campaigns[] = records.filter((r: any) => r.type === "sub").map((record: any) => {
             let status = record.status;
             if (status !== "Paused") { // Only update if NOT "Paused"
                 const endDate = dayjs(record.endDate);
@@ -164,26 +165,31 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
             }
         });
 
-        const groupedResults = Array.from(groupedMap.values()).map(group => ({
-            id: group.id,
-            campaignId: group.campaignId,
-            client: group.client,
-            newField: group.newField,
-            campaignSubText: group.campaignSubText,
-            sumView: group.totalViews,
-            sumSpent: group.totalSpent,
-            sumBudget: group.totalBudget,
-            sumImpressions: group.totalImpressions,
-            sumReach: group.totalReach,
-            sumClicks: group.totalClicks,
-            earliestStartDate: group.earliestStartDate,
-            latestStartDate: group.latestStartDate,
-            earliestEndDate: group.earliestEndDate,
-            latestEndDate: group.latestEndDate,
-            status: group.status,
-            subCampaign: group.subCampaign,
-            progressValue: group.progressValue,
-        }));
+        const groupedResults = Array.from(groupedMap.values()).map((group: any) => {
+            const mainCampaign = records.find((r: any) => r.newField === group.newField && r.type === "main");
+
+            return {
+                id: group.id,
+                campaignId: group.campaignId,
+                client: group.client,
+                newField: group.newField,
+                campaignSubText: group.campaignSubText,
+                sumView: group.totalViews,
+                sumSpent: group.totalSpent,
+                sumBudget: group.totalBudget,
+                sumImpressions: group.totalImpressions,
+                // Only Reach is not calculated by sum of sub-campaigns
+                sumReach: mainCampaign ? mainCampaign.reach : group.totalReach,
+                sumClicks: group.totalClicks,
+                earliestStartDate: group.earliestStartDate,
+                latestStartDate: group.latestStartDate,
+                earliestEndDate: group.earliestEndDate,
+                latestEndDate: group.latestEndDate,
+                status: group.status,
+                subCampaign: group.subCampaign,
+                progressValue: group.progressValue,
+            }
+        });
 
         reply.code(200).send({ message: "CSV data retrieved successfully", records: groupedResults });
     } catch (error) {
@@ -199,7 +205,7 @@ export const updateCampaign = async (fastify: FastifyInstance, request: FastifyR
         const { id, status, userId } = body;
         if (!id || !status) {
             res = {
-                code: 400, 
+                code: 400,
                 message: "Missing campaignId or status"
             }
             return;
@@ -209,7 +215,7 @@ export const updateCampaign = async (fastify: FastifyInstance, request: FastifyR
 
     } catch (error) {
         res = {
-            code: 500, 
+            code: 500,
             message: "Failed to update campaign"
         }
     }
