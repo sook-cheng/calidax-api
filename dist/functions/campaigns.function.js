@@ -11,7 +11,7 @@ dayjs_1.default.extend(utc_1.default);
 const fetchCSVData = async (fastify, request, reply) => {
     try {
         const { status, objective, searchText } = request.query;
-        let records = await (0, helpers_1.getCSVDataFromDB)(fastify);
+        const records = await (0, helpers_1.getCSVDataFromDB)(fastify);
         const today = dayjs_1.default.utc().format();
         // Filter out sub-campaigns
         let campaignList = records.filter((r) => r.type === "sub").map((record) => {
