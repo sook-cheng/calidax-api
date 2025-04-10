@@ -33,8 +33,7 @@ export async function mainRoute(fastify: FastifyInstance) {
     });
 
     fastify.post("/upload-csv/:type/:userId", async (request, reply) => {
-        const result = await uploadCSVAndSaveToFirestore(fastify, request);
-        reply.code(result?.code!).send({ message: result?.message, id: result?.id });
+        return await uploadCSVAndSaveToFirestore(fastify, request, reply);
     });
 
     fastify.get("/fetch-csv-record", async (request, reply) => {
