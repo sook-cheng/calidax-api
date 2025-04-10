@@ -29,8 +29,7 @@ async function mainRoute(fastify) {
         reply.code(result?.code).send({ message: result?.message });
     });
     fastify.post("/upload-csv/:type/:userId", async (request, reply) => {
-        const result = await (0, data_management_function_1.uploadCSVAndSaveToFirestore)(fastify, request);
-        reply.code(result?.code).send({ message: result?.message, id: result?.id });
+        return await (0, data_management_function_1.uploadCSVAndSaveToFirestore)(fastify, request, reply);
     });
     fastify.get("/fetch-csv-record", async (request, reply) => {
         return await (0, campaigns_function_1.fetchCSVData)(fastify, request, reply);

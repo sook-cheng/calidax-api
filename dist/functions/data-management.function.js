@@ -13,20 +13,15 @@ const convertChineseDateToEnglish = (dateString) => {
     return dateString.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/, "$1-$2-$3");
 };
 const serverFolder = '/home/dashboardcalidax/public_html/documents/csv';
-const uploadCSVAndSaveToFirestore = async (fastify, request) => {
-    let res = { code: 500, message: "INTERNAL_SERVER_EEROR" };
+const uploadCSVAndSaveToFirestore = async (fastify, request, reply) => {
     try {
         const file = await request.file();
         if (!file) {
-            res = {
-                code: 400,
-                message: "No file uploaded"
-            };
-            return;
+            return reply.code(400).send({ message: "No file uploaded" });
         }
         const { type, userId } = request.params;
         const fileBuffer = await file.toBuffer();
-        //  Upload file to storage
+        // Upload file to storage
         (0, promises_1.pipeline)(file.file, fs_1.default.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }));
         const records = [];
         node_stream_1.Readable.from(fileBuffer)
@@ -36,19 +31,19 @@ const uploadCSVAndSaveToFirestore = async (fastify, request) => {
                 if (typeof row[key] === "string" && row[key].match(/\d{4}年\d{1,2}月\d{1,2}日/)) {
                     row[key] = convertChineseDateToEnglish(row[key]);
                 }
-                if (row.Campaign && row.Campaign.toLowerCase().includes("de rantau - clicks")) {
+                if (row["New Field"] && row["New Field"].toLowerCase().includes("de rantau - clicks")) {
                     row.CampaignSubText = "Click";
                     row.SubCampaignSubText = "CPC";
                 }
-                else if (row.Campaign && row.Campaign.toLowerCase().includes("de rantau - leads")) {
+                else if (row["New Field"] && row["New Field"].toLowerCase().includes("de rantau - leads")) {
                     row.CampaignSubText = "Leads";
                     row.SubCampaignSubText = "CPL";
                 }
-                else if (row.Campaign && row.Campaign.toLowerCase().includes("investment")) {
+                else if (row["New Field"] && row["New Field"].toLowerCase().includes("invesment")) {
                     row.CampaignSubText = "Impressions";
                     row.SubCampaignSubText = "CPM";
                 }
-                else if (row.Campaign && row.Campaign.toLowerCase().includes("mdec thematic brand campaign")) {
+                else if (row["New Field"] && row["New Field"].toLowerCase().includes("thematic")) {
                     row.CampaignSubText = "Views";
                     row.SubCampaignSubText = "CPV";
                 }
@@ -65,23 +60,17 @@ const uploadCSVAndSaveToFirestore = async (fastify, request) => {
         })
             .on("end", async () => {
             await (0, helpers_1.truncateCsvTable)(fastify);
-            res = await (0, helpers_1.saveCSVDataToDB)(fastify, records, type, file.filename, userId);
+            const result = await (0, helpers_1.saveCSVDataToDB)(fastify, records, type, file.filename, userId);
+            return reply.code(result?.code).send({ message: result?.message, id: result?.id });
         })
             .on("error", (err) => {
-            res = {
-                code: 500,
-                message: err.message
-            };
+            console.log("Failed to upload csv error: ", err);
+            return reply.code(500).send({ message: "INTERNAL_SERVER_EEROR" });
         });
     }
     catch (error) {
-        res = {
-            code: 500,
-            message: "Failed to process CSV file"
-        };
-    }
-    finally {
-        return res;
+        console.log("Failed to upload csv error: ", error);
+        return reply.code(500).send({ message: "INTERNAL_SERVER_EEROR" });
     }
 };
 exports.uploadCSVAndSaveToFirestore = uploadCSVAndSaveToFirestore;

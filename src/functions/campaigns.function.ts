@@ -27,7 +27,7 @@ export interface Campaigns {
 export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
         const { status, objective, searchText } = request.query as { status?: string; objective?: string; searchText?: string };
-        let records = await getCSVDataFromDB(fastify);
+        const records = await getCSVDataFromDB(fastify);
 
         const today = dayjs.utc().format();
 

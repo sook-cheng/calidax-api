@@ -11,22 +11,16 @@ const convertChineseDateToEnglish = (dateString: string): string => {
 
 const serverFolder = '/home/dashboardcalidax/public_html/documents/csv';
 
-export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, request: FastifyRequest) => {
-    let res: { code: number, message: string, id?: number } | undefined = { code: 500, message: "INTERNAL_SERVER_EEROR" };
-    
+export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
         const file = await request.file();
         if (!file) {
-            res = {
-                code: 400,
-                message: "No file uploaded"
-            }
-            return;
+            return reply.code(400).send({ message: "No file uploaded" });
         }
         const { type, userId } = request.params as { type: string, userId: number };
         const fileBuffer = await file.toBuffer();
 
-        //  Upload file to storage
+        // Upload file to storage
         pipeline(file.file, fs.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }));
                 
         const records: any[] = [];
@@ -38,22 +32,22 @@ export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, requ
                         row[key] = convertChineseDateToEnglish(row[key]);
                     }
 
-                    if (row.Campaign && row.Campaign.toLowerCase().includes("de rantau - clicks"))
+                    if (row["New Field"] && row["New Field"].toLowerCase().includes("de rantau - clicks"))
                     {
                         row.CampaignSubText = "Click";
                         row.SubCampaignSubText = "CPC";
                     }
-                    else if (row.Campaign && row.Campaign.toLowerCase().includes("de rantau - leads"))
+                    else if (row["New Field"] && row["New Field"].toLowerCase().includes("de rantau - leads"))
                     {
                         row.CampaignSubText = "Leads";
                         row.SubCampaignSubText = "CPL";
                     }
-                    else if (row.Campaign && row.Campaign.toLowerCase().includes("investment"))
+                    else if (row["New Field"] && row["New Field"].toLowerCase().includes("invesment"))
                     {
                         row.CampaignSubText = "Impressions";
                         row.SubCampaignSubText = "CPM";
                     }
-                    else if (row.Campaign && row.Campaign.toLowerCase().includes("mdec thematic brand campaign"))
+                    else if (row["New Field"] && row["New Field"].toLowerCase().includes("thematic"))
                     {
                         row.CampaignSubText = "Views";
                         row.SubCampaignSubText = "CPV";
@@ -74,21 +68,15 @@ export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, requ
             })
             .on("end", async () => {
                 await truncateCsvTable(fastify);
-                res = await saveCSVDataToDB(fastify, records, type, file.filename, userId);
+                const result = await saveCSVDataToDB(fastify, records, type, file.filename, userId);
+                return reply.code(result?.code!).send({ message: result?.message, id: result?.id });
             })
             .on("error", (err) => {
-                res = {
-                    code: 500,
-                    message: err.message
-                };
+                console.log("Failed to upload csv error: ", err);
+                return reply.code(500).send({ message: "INTERNAL_SERVER_EEROR" });
             });
     } catch (error) {
-        res = {
-            code: 500,
-            message: "Failed to process CSV file"
-        };
-    }
-    finally {
-        return res;
+        console.log("Failed to upload csv error: ", error);
+        return reply.code(500).send({ message: "INTERNAL_SERVER_EEROR" });
     }
 };

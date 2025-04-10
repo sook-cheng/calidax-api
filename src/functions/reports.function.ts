@@ -83,10 +83,10 @@ export const filterReports = async (fastify: FastifyInstance, data: any) => {
             endDate = dates[0];
         }
 
-        let records = await getCSVDataFromDB(fastify);
+        const records = await getCSVDataFromDB(fastify);
         
         const today = dayjs.utc().format();
-        records = records.map((record: any) => {
+        const campaignList: Campaigns[] = records.filter((r: any) => r.type === "sub").map((record: any) => {
             let status = record.status;
             if (status !== "Paused") { // Only update if NOT "Paused"
                 const endDate = dayjs(record.endDate);
@@ -117,7 +117,7 @@ export const filterReports = async (fastify: FastifyInstance, data: any) => {
             }
         });
 
-        const filteredRecords = records.filter((x: any) => {
+        const filteredRecords = campaignList.filter((x: any) => {
             return (data.client && x.client === data.client)
                 && (startDate && (dayjs(x.startDate).isSame(dayjs(startDate)) || dayjs(x.startDate).isAfter(dayjs(startDate))))
                 && (endDate && (dayjs(x.endDate).isSame(dayjs(endDate)) || dayjs(x.endDate).isBefore(dayjs(endDate))))
@@ -215,26 +215,31 @@ export const filterReports = async (fastify: FastifyInstance, data: any) => {
             }
         }
 
-        const ret = Array.from(groupedMap.values()).map(group => ({
-            id: group.id,
-            campaignId: group.campaignId,
-            client: group.client,
-            newField: group.newField,
-            campaignSubText: group.campaignSubText,
-            sumView: group.totalViews,
-            sumSpent: group.totalSpent,
-            sumBudget: group.totalBudget,
-            sumImpressions: group.totalImpressions,
-            sumReach: group.totalReach,
-            sumClicks: group.totalClicks,
-            earliestStartDate: group.earliestStartDate,
-            latestStartDate: group.latestStartDate,
-            earliestEndDate: group.earliestEndDate,
-            latestEndDate: group.latestEndDate,
-            status: group.status,
-            subCampaign: group.subCampaign,
-            progressValue: group.progressValue,
-        }));
+        const ret = Array.from(groupedMap.values()).map((group: any) => {
+            const mainCampaign = records.find((r: any) => r.newField === group.newField && r.type === "main");
+
+            return {
+                id: group.id,
+                campaignId: group.campaignId,
+                client: group.client,
+                newField: group.newField,
+                campaignSubText: group.campaignSubText,
+                sumView: group.totalViews,
+                sumSpent: group.totalSpent,
+                sumBudget: group.totalBudget,
+                sumImpressions: group.totalImpressions,
+                // Only Reach is not calculated by sum of sub-campaigns
+                sumReach: mainCampaign ? mainCampaign.reach : group.totalReach,
+                sumClicks: group.totalClicks,
+                earliestStartDate: group.earliestStartDate,
+                latestStartDate: group.latestStartDate,
+                earliestEndDate: group.earliestEndDate,
+                latestEndDate: group.latestEndDate,
+                status: group.status,
+                subCampaign: group.subCampaign,
+                progressValue: group.progressValue,
+            }
+        });
 
         let reportId;
         if (ret.length > 0) {

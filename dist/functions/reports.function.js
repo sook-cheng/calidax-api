@@ -79,9 +79,9 @@ const filterReports = async (fastify, data) => {
             const dates = data?.endDate.split('T');
             endDate = dates[0];
         }
-        let records = await (0, helpers_1.getCSVDataFromDB)(fastify);
+        const records = await (0, helpers_1.getCSVDataFromDB)(fastify);
         const today = dayjs_1.default.utc().format();
-        records = records.map((record) => {
+        const campaignList = records.filter((r) => r.type === "sub").map((record) => {
             let status = record.status;
             if (status !== "Paused") { // Only update if NOT "Paused"
                 const endDate = (0, dayjs_1.default)(record.endDate);
@@ -112,7 +112,7 @@ const filterReports = async (fastify, data) => {
                 status,
             };
         });
-        const filteredRecords = records.filter((x) => {
+        const filteredRecords = campaignList.filter((x) => {
             return (data.client && x.client === data.client)
                 && (startDate && ((0, dayjs_1.default)(x.startDate).isSame((0, dayjs_1.default)(startDate)) || (0, dayjs_1.default)(x.startDate).isAfter((0, dayjs_1.default)(startDate))))
                 && (endDate && ((0, dayjs_1.default)(x.endDate).isSame((0, dayjs_1.default)(endDate)) || (0, dayjs_1.default)(x.endDate).isBefore((0, dayjs_1.default)(endDate))));
@@ -184,26 +184,30 @@ const filterReports = async (fastify, data) => {
                 }
             }
         }
-        const ret = Array.from(groupedMap.values()).map(group => ({
-            id: group.id,
-            campaignId: group.campaignId,
-            client: group.client,
-            newField: group.newField,
-            campaignSubText: group.campaignSubText,
-            sumView: group.totalViews,
-            sumSpent: group.totalSpent,
-            sumBudget: group.totalBudget,
-            sumImpressions: group.totalImpressions,
-            sumReach: group.totalReach,
-            sumClicks: group.totalClicks,
-            earliestStartDate: group.earliestStartDate,
-            latestStartDate: group.latestStartDate,
-            earliestEndDate: group.earliestEndDate,
-            latestEndDate: group.latestEndDate,
-            status: group.status,
-            subCampaign: group.subCampaign,
-            progressValue: group.progressValue,
-        }));
+        const ret = Array.from(groupedMap.values()).map((group) => {
+            const mainCampaign = records.find((r) => r.newField === group.newField && r.type === "main");
+            return {
+                id: group.id,
+                campaignId: group.campaignId,
+                client: group.client,
+                newField: group.newField,
+                campaignSubText: group.campaignSubText,
+                sumView: group.totalViews,
+                sumSpent: group.totalSpent,
+                sumBudget: group.totalBudget,
+                sumImpressions: group.totalImpressions,
+                // Only Reach is not calculated by sum of sub-campaigns
+                sumReach: mainCampaign ? mainCampaign.reach : group.totalReach,
+                sumClicks: group.totalClicks,
+                earliestStartDate: group.earliestStartDate,
+                latestStartDate: group.latestStartDate,
+                earliestEndDate: group.earliestEndDate,
+                latestEndDate: group.latestEndDate,
+                status: group.status,
+                subCampaign: group.subCampaign,
+                progressValue: group.progressValue,
+            };
+        });
         let reportId;
         if (ret.length > 0) {
             const [result] = await connection.execute('INSERT INTO dashboard_reports (client,startDate,endDate,createdBy) VALUES (?,?,?,?)', [data?.client, startDate, endDate, data?.userId]);
