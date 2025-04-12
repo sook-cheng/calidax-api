@@ -12,7 +12,7 @@ const node_stream_1 = require("node:stream");
 const convertChineseDateToEnglish = (dateString) => {
     return dateString.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/, "$1-$2-$3");
 };
-const serverFolder = '/home/dashboardcalidax/public_html/documents/csv';
+const serverFolder = '/home/apicalidaxtech/public_html/documents/csv';
 const uploadCSVAndSaveToFirestore = async (fastify, request, reply) => {
     try {
         const file = await request.file();

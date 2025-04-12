@@ -10,7 +10,7 @@ const helpers_1 = require("../helpers");
 const promises_1 = require("node:stream/promises");
 const fs_1 = __importDefault(require("fs"));
 dayjs_1.default.extend(utc_1.default);
-const serverFolder = '/home/dashboardcalidax/public_html/documents/reports';
+const serverFolder = '/home/apicalidaxtech/public_html/documents/reports';
 /**
  *
  * @param file (AsyncIterableIterator<fastifyMultipart.MultipartFile>)
