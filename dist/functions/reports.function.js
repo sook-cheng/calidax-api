@@ -26,7 +26,7 @@ const uploadReport = async (fastify, file, reportId) => {
     let res = { code: 500, message: "INTERNAL_SERVER_ERROR" };
     try {
         if (file.type === 'file') {
-            //  Upload file to storage
+            // Upload file to storage
             (0, promises_1.pipeline)(file.file, fs_1.default.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }));
             const path = (0, helpers_1.formatFileUrl)('documents/reports', file.filename);
             const [result] = await connection.execute('UPDATE dashboard_reports SET url=? WHERE id=?', [path, reportId]);
@@ -213,13 +213,17 @@ const filterReports = async (fastify, data) => {
             const [result] = await connection.execute('INSERT INTO dashboard_reports (client,startDate,endDate,createdBy) VALUES (?,?,?,?)', [data?.client, startDate, endDate, data?.userId]);
             reportId = result?.insertId;
         }
-        if (reportId)
-            res = {
-                code: 201,
-                message: 'CREATED_SUCCESSFUL',
-                reportId,
-                records: ret,
-            };
+        res = reportId ? {
+            code: 201,
+            message: 'CREATED_SUCCESSFUL',
+            reportId,
+            records: ret,
+        } : {
+            code: 200,
+            message: "NO_DATA_TO_EXPORT",
+            reportId,
+            records: []
+        };
     }
     catch (error) {
         res = {
