@@ -35,14 +35,14 @@ export const saveCSVDataToDB = async (fastify: FastifyInstance, records: any[], 
             id: result.insertId,
         } : {
             code: 500,
-            message: "INTERNAL_SERVER_ERROR"
+            message: "INTERNAL_SERVER_ERROR: No CSV file inserted"
         };
     }
     catch (err) {
         console.error(err);
         res = {
             code: 500,
-            message: "INTERNAL_SERVER_ERROR"
+            message: `INTERNAL_SERVER_ERROR: ${err}`
         };
     }
     finally {
@@ -98,20 +98,23 @@ export const truncateCsvTable = async (fastify: FastifyInstance) => {
     let res: { code: number, message: string } = { code: 200, message: "OK." };
 
     try {
-        const [result] = await connection.execute('TRUNCATE TABLE csv_data');
-        res = result?.affectedRows > 0 ? {
-            code: 204,
-            message: `CSV data cleared.`
-        } : {
-            code: 500,
-            message: "INTERNAL_SERVER_ERROR"
-        };
+        const [rows] = await connection.query('SELECT * FROM csv_data');
+        if (rows.length > 0) {
+            const [result] = await connection.execute('TRUNCATE TABLE csv_data');
+            res = result?.affectedRows > 0 ? {
+                code: 204,
+                message: `CSV data cleared.`
+            } : {
+                code: 500,
+                message: "INTERNAL_SERVER_ERROR: No record in csv_data table"
+            };
+        }
     }
     catch (err) {
         console.error(err);
         res = {
             code: 500,
-            message: "INTERNAL_SERVER_ERROR"
+            message: `INTERNAL_SERVER_ERROR: ${err}`
         };
     }
     finally {
