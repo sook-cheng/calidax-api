@@ -25,7 +25,7 @@ export const uploadReport = async (fastify: FastifyInstance, file: any, reportId
 
     try {
         if (file.type === 'file') {
-            //  Upload file to storage
+            // Upload file to storage
             pipeline(file.file, fs.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }));
             const path = formatFileUrl('documents/reports', file.filename);
 
@@ -248,11 +248,16 @@ export const filterReports = async (fastify: FastifyInstance, data: any) => {
             reportId = result?.insertId;
         }
 
-        if (reportId) res = {
+        res = reportId ? {
             code: 201,
             message: 'CREATED_SUCCESSFUL',
             reportId,
             records: ret,
+        } : {
+            code: 200,
+            message: "NO_DATA_TO_EXPORT",
+            reportId,
+            records: []
         };
     }
     catch (error: any) {
