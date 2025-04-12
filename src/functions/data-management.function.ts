@@ -9,7 +9,7 @@ const convertChineseDateToEnglish = (dateString: string): string => {
     return dateString.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/, "$1-$2-$3");
 };
 
-const serverFolder = '/home/dashboardcalidax/public_html/documents/csv';
+const serverFolder = '/home/apicalidaxtech/public_html/documents/csv';
 
 export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     try {
