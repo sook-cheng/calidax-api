@@ -24,7 +24,7 @@ const uploadCSVAndSaveToFirestore = async (fastify, request, reply) => {
         const content = fileBuffer.toString('utf-8');
         // Upload file to storage
         (0, promises_1.pipeline)(file.file, fs_1.default.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }));
-        return await processFileString(content, type, userId, file.filename, fastify, reply);
+        return await processFileString(content, type, userId, "_", fastify, reply);
     }
     catch (error) {
         console.log("Failed to upload csv error: ", error);

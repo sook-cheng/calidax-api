@@ -24,7 +24,7 @@ export const uploadCSVAndSaveToFirestore = async (fastify: FastifyInstance, requ
         // Upload file to storage
         pipeline(file.file, fs.createWriteStream(`${serverFolder}/${file.filename}`, { highWaterMark: 10 * 1024 * 1024 }));
 
-        return await processFileString(content, type, userId, file.filename, fastify, reply);
+        return await processFileString(content, type, userId, "_", fastify, reply);
     } catch (error) {
         console.log("Failed to upload csv error: ", error);
         return reply.code(500).send({ message: "INTERNAL_SERVER_EEROR" });
