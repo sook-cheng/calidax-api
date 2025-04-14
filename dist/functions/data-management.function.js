@@ -55,7 +55,7 @@ const processFileString = async (fileString, type, userId, filename, fastify, re
                 row.CampaignSubText = "Leads";
                 row.SubCampaignSubText = "CPL";
             }
-            else if (row["New Field"] && row["New Field"].toLowerCase().includes("invesment")) {
+            else if (row["New Field"] && row["New Field"].toLowerCase().includes("investment")) {
                 row.CampaignSubText = "Impressions";
                 row.SubCampaignSubText = "CPM";
             }
@@ -97,7 +97,7 @@ const processFileBuffer = (fileBuffer, type, userId, filename, fastify, reply) =
                 row.CampaignSubText = "Leads";
                 row.SubCampaignSubText = "CPL";
             }
-            else if (row["New Field"] && row["New Field"].toLowerCase().includes("invesment")) {
+            else if (row["New Field"] && row["New Field"].toLowerCase().includes("investment")) {
                 row.CampaignSubText = "Impressions";
                 row.SubCampaignSubText = "CPM";
             }
