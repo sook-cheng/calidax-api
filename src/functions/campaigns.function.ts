@@ -36,7 +36,7 @@ export const fetchCSVData = async (fastify: FastifyInstance, request: FastifyReq
             let status = record.status;
             if (status !== "Paused") { // Only update if NOT "Paused"
                 const endDate = dayjs(record.endDate);
-                if (endDate.isSame(today) || endDate.isAfter(today)) {
+                if (endDate.isSame(today) || endDate.isAfter(today) || status === "Active") {
                     status = "Active";
                 } else {
                     status = "Ended";
