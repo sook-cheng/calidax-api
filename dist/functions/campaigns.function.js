@@ -18,7 +18,7 @@ const fetchCSVData = async (fastify, request, reply) => {
             let status = record.status;
             if (status !== "Paused") { // Only update if NOT "Paused"
                 const endDate = (0, dayjs_1.default)(record.endDate);
-                if (endDate.isSame(today) || endDate.isAfter(today)) {
+                if (endDate.isSame(today) || endDate.isAfter(today) || status === "Active") {
                     status = "Active";
                 }
                 else {
